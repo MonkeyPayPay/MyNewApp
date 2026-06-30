@@ -6,7 +6,9 @@ import { supabase } from './lib/supabase'
 import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
+import JoinCircle from './pages/JoinCircle'
 import Dashboard from './components/dashboard/Dashboard'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 
 async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return
@@ -53,23 +55,47 @@ async function initNativePlugins() {
   }
 }
 
+function Spinner() {
+  return (
+    <div className="min-h-screen bg-[#050510] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
+
 function AppRouter() {
   const { user, loading: authLoading, signOut } = useAuth()
-  const { circle, loading: circleLoading } = useCircle()
-  const [showAuth, setShowAuth] = useState(false)
+  const { circle, loading: circleLoading, refetch } = useCircle()
+  const [showAuth, setShowAuth]         = useState(false)
   const [onboardingDone, setOnboardingDone] = useState(false)
 
-  if (authLoading || (user && circleLoading)) {
-    return (
-      <div className="min-h-screen bg-[#050510] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
+  // Capture invite token from /join?token=... on first render
+  const [inviteToken, setInviteToken] = useState(() => {
+    if (window.location.pathname === '/join') {
+      const token = new URLSearchParams(window.location.search).get('token')
+      if (token) {
+        window.history.replaceState({}, '', '/')
+        return token
+      }
+    }
+    return null
+  })
+
+  const isLoading = authLoading || (user && circleLoading && !inviteToken && !onboardingDone)
+  if (isLoading) return <Spinner />
 
   if (!user) {
-    if (showAuth) return <Auth />
+    if (inviteToken || showAuth) return <Auth />
     return <Landing onGetStarted={() => setShowAuth(true)} />
+  }
+
+  if (inviteToken) {
+    return (
+      <JoinCircle
+        token={inviteToken}
+        onComplete={() => { setInviteToken(null); refetch() }}
+      />
+    )
   }
 
   if (!circle && !onboardingDone) {
@@ -83,8 +109,10 @@ export default function App() {
   useEffect(() => { initNativePlugins() }, [])
 
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

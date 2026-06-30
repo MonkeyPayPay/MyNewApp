@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Heart, User, Mail, ArrowRight, ArrowLeft, CheckCircle, Plus, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCircle } from '../hooks/useCircle'
+import { supabase } from '../lib/supabase'
 
 const STEPS = ['Your name', 'Care recipient', 'Invite family', 'You\'re set']
 
@@ -25,6 +26,10 @@ export default function Onboarding({ onComplete }) {
   async function handleCreateCircle() {
     setLoading(true)
     setError(null)
+    // Persist name to profile
+    if (name.trim()) {
+      await supabase.from('profiles').upsert({ id: user.id, full_name: name.trim() })
+    }
     const { circle, error } = await createCircle({
       recipientName,
       recipientDob: recipientDob || null,

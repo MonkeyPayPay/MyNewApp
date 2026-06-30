@@ -36,20 +36,28 @@ export function useDocuments(circleId) {
         .upload(filePath, file, { contentType: file.type, upsert: false })
       if (upErr) throw upErr
 
-      const { error: dbErr } = await supabase.from('documents').insert({
+      const { data: inserted, error: dbErr } = await supabase.from('documents').insert({
         circle_id:   circleId,
         uploaded_by: user.id,
         name:        file.name,
         file_path:   filePath,
         file_size:   file.size,
         mime_type:   file.type,
-      })
+      }).select('id').single()
       if (dbErr) {
         await supabase.storage.from('documents').remove([filePath])
         throw dbErr
       }
 
       await fetchDocs()
+
+      // Fire-and-forget AI summarization (non-blocking — updates ai_summary when done)
+      if (inserted?.id) {
+        supabase.functions.invoke('summarize-document', { body: { documentId: inserted.id } })
+          .then(() => fetchDocs())
+          .catch(() => {})
+      }
+
       return { error: null }
     } catch (err) {
       return { error: err }

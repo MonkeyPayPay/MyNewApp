@@ -3,7 +3,7 @@ import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
   ChevronRight, ChevronLeft, Brain, Activity, MessageSquare, Upload, X,
-  TrendingUp, Users, Zap, CreditCard, Trash2, Loader
+  TrendingUp, Users, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
@@ -83,13 +83,18 @@ const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_adviso
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
 export default function Dashboard({ onLogout }) {
-  const { circle, recipient, members, loading: circleLoading } = useCircle()
+  const { user } = useAuth()
+  const { circle, recipient, members, loading: circleLoading, inviteMember } = useCircle()
   const { tier, can, openPortal } = useSubscription()
   const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask } = useTasks(circle?.id)
 
-  const [activeNav, setActiveNav]     = useState('home')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [activeNav, setActiveNav]       = useState('home')
+  const [sidebarOpen, setSidebarOpen]   = useState(true)
   const [upgradeModal, setUpgradeModal] = useState(null)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+
+  const firstName  = user?.user_metadata?.full_name?.split(' ')[0] ?? 'Me'
+  const initials   = user?.user_metadata?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '?'
 
   const pendingCount = tasks.filter(t => !t.completed_at).length
 
@@ -125,6 +130,7 @@ export default function Dashboard({ onLogout }) {
   return (
     <div className="flex h-screen bg-[#0a0a1a] overflow-hidden">
       {upgradeModal && <UpgradeModal feature={upgradeModal} onClose={() => setUpgradeModal(null)} />}
+      {showInviteModal && <InviteModal onClose={() => setShowInviteModal(false)} onSend={inviteMember} />}
 
       {/* Sidebar */}
       <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-[#050510] border-r border-white/5 flex flex-col`}>
@@ -156,6 +162,15 @@ export default function Dashboard({ onLogout }) {
                 )
                 : <p className="text-slate-600 text-xs">No circle yet</p>
             }
+            {circle && (
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-xl text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 text-xs font-medium transition-all"
+              >
+                <UserPlus className="w-3.5 h-3.5 flex-shrink-0" />
+                Invite family member
+              </button>
+            )}
           </div>
         )}
 
@@ -229,8 +244,8 @@ export default function Dashboard({ onLogout }) {
               <Bell className="w-5 h-5" />
             </button>
             <button className="flex items-center gap-2 glass rounded-xl px-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">J</div>
-              <span className="text-slate-300 text-sm font-medium">Me</span>
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
+              <span className="text-slate-300 text-sm font-medium">{firstName}</span>
             </button>
           </div>
         </header>
@@ -702,6 +717,25 @@ function ExpensesView({ circleId, members }) {
   const monthTotal  = monthExp.reduce((s, e) => s + e.amount_cents, 0)
   const myTotal     = monthExp.filter(e => e.paid_by === user?.id).reduce((s, e) => s + e.amount_cents, 0)
 
+  function exportCSV() {
+    const header = ['Date', 'Description', 'Category', 'Amount', 'Paid By']
+    const rows   = expenses.map(e => [
+      e.expense_date ?? '',
+      `"${(e.label ?? '').replace(/"/g, '""')}"`,
+      e.category ?? '',
+      (e.amount_cents / 100).toFixed(2),
+      `"${(e.payer?.full_name ?? 'Unknown').replace(/"/g, '""')}"`,
+    ])
+    const csv  = [header, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `expenses-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -709,9 +743,16 @@ function ExpensesView({ circleId, members }) {
           <h2 className="text-white font-bold text-xl">Expenses</h2>
           <p className="text-slate-500 text-sm">Track, split, and settle caregiving costs</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-          <Plus className="w-4 h-4" /> Add Expense
-        </button>
+        <div className="flex items-center gap-2">
+          {expenses.length > 0 && (
+            <button onClick={exportCSV} className="flex items-center gap-2 glass border border-white/10 text-slate-300 hover:text-white text-sm font-medium px-3 py-2.5 rounded-xl transition-all">
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
+          )}
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+            <Plus className="w-4 h-4" /> Add Expense
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -1310,6 +1351,82 @@ function AIAdvisorView({ can, onUpgrade }) {
         <p className="text-slate-500 text-xs text-center">
           AI insights are generated from your care log data. Always consult healthcare professionals for medical decisions.
         </p>
+      </div>
+    </div>
+  )
+}
+
+// ── InviteModal ───────────────────────────────────────────────────────────────
+
+function InviteModal({ onClose, onSend }) {
+  const [email, setEmail]     = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent]       = useState(false)
+  const [error, setError]     = useState(null)
+
+  async function handleSend() {
+    if (!email.trim() || !email.includes('@')) return
+    setSending(true)
+    setError(null)
+    const { error: err } = await onSend(email.trim())
+    setSending(false)
+    if (err) { setError(err.message ?? 'Failed to send invite'); return }
+    setSent(true)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="glass rounded-3xl p-8 w-full max-w-md border border-white/10 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+        {sent ? (
+          <div className="text-center py-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h3 className="text-white font-bold text-xl mb-2">Invite sent!</h3>
+            <p className="text-slate-400 text-sm mb-6">{email} will receive an email to join your circle.</p>
+            <button onClick={onClose} className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 transition-opacity">Done</button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-lg">Invite family member</h3>
+                <p className="text-slate-500 text-sm">They'll get an email to join your circle</p>
+              </div>
+            </div>
+
+            <label className="block text-slate-400 text-xs font-medium mb-2 uppercase tracking-widest">Email address</label>
+            <div className="relative mb-4">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="sibling@example.com"
+                autoFocus
+                className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-colors"
+              />
+            </div>
+
+            {error && <p className="text-rose-400 text-xs mb-4 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
+
+            <div className="flex gap-3">
+              <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 text-sm font-medium hover:bg-white/5 transition-all">Cancel</button>
+              <button
+                onClick={handleSend}
+                disabled={!email.trim() || !email.includes('@') || sending}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {sending ? <><Loader className="w-4 h-4 animate-spin" /> Sending…</> : <><Mail className="w-4 h-4" /> Send Invite</>}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
