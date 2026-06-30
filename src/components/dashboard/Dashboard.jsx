@@ -4,8 +4,10 @@ import {
   Bell, Settings, LogOut, Plus, CheckCircle, Clock, AlertCircle,
   ChevronRight, MoreHorizontal, Brain, Activity, Pill, Car,
   Phone, ShoppingCart, Stethoscope, MessageSquare, Upload, X,
-  TrendingUp, Users, Star, ArrowUp, ArrowDown
+  TrendingUp, Users, Star, ArrowUp, ArrowDown, Zap, CreditCard
 } from 'lucide-react'
+import { useSubscription } from '../../hooks/useSubscription'
+import UpgradeModal from '../ui/UpgradeModal'
 
 const mockFeed = [
   { id: 1, icon: '💊', category: 'Medication', text: 'Morning medications administered — Lisinopril 10mg, Metformin 500mg', author: 'Sarah', time: '8:12 AM', color: 'bg-emerald-500/20 text-emerald-400' },
@@ -61,18 +63,30 @@ export default function Dashboard({ onLogout }) {
   const [tasks, setTasks] = useState(mockTasks)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showAIInsight, setShowAIInsight] = useState(true)
+  const [upgradeModal, setUpgradeModal] = useState(null)
+
+  const { tier, can, openPortal } = useSubscription()
 
   const toggleTask = (id) => {
     setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
   }
 
   const pendingTasks = tasks.filter(t => !t.done).length
-  const completedTasks = tasks.filter(t => t.done).length
+
+  function navigateTo(id) {
+    const gated = { expenses: 'expenses', documents: 'documents', ai: 'ai_advisor' }
+    const feature = gated[id]
+    if (feature && !can(feature)) {
+      setUpgradeModal(feature)
+      return
+    }
+    setActiveNav(id)
+  }
 
   const renderContent = () => {
     switch (activeNav) {
       case 'home':
-        return <HomeView tasks={tasks} toggleTask={toggleTask} pendingTasks={pendingTasks} showAIInsight={showAIInsight} setShowAIInsight={setShowAIInsight} />
+        return <HomeView tasks={tasks} toggleTask={toggleTask} pendingTasks={pendingTasks} showAIInsight={showAIInsight} setShowAIInsight={setShowAIInsight} onUpgrade={setUpgradeModal} can={can} />
       case 'feed':
         return <FeedView />
       case 'tasks':
@@ -84,13 +98,14 @@ export default function Dashboard({ onLogout }) {
       case 'ai':
         return <AIAdvisorView />
       default:
-        return <HomeView tasks={tasks} toggleTask={toggleTask} pendingTasks={pendingTasks} showAIInsight={showAIInsight} setShowAIInsight={setShowAIInsight} />
+        return <HomeView tasks={tasks} toggleTask={toggleTask} pendingTasks={pendingTasks} showAIInsight={showAIInsight} setShowAIInsight={setShowAIInsight} onUpgrade={setUpgradeModal} can={can} />
     }
   }
 
   return (
     <div className="flex h-screen bg-[#0a0a1a] overflow-hidden">
       {/* Sidebar */}
+      {upgradeModal && <UpgradeModal feature={upgradeModal} onClose={() => setUpgradeModal(null)} />}
       <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-[#050510] border-r border-white/5 flex flex-col`}>
         {/* Logo */}
         <div className="p-4 border-b border-white/5">
@@ -118,29 +133,54 @@ export default function Dashboard({ onLogout }) {
 
         {/* Nav */}
         <nav className="flex-1 p-3 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveNav(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                activeNav === item.id
-                  ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'
-                  : 'text-slate-500 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
-              {sidebarOpen && item.id === 'tasks' && pendingTasks > 0 && (
-                <span className="ml-auto bg-indigo-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {pendingTasks}
-                </span>
-              )}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const gated = { expenses: 'expenses', documents: 'documents', ai: 'ai_advisor' }
+            const isLocked = gated[item.id] && !can(gated[item.id])
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigateTo(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  activeNav === item.id
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'
+                    : 'text-slate-500 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span className="flex-shrink-0">{item.icon}</span>
+                {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+                {sidebarOpen && isLocked && (
+                  <Zap className="w-3.5 h-3.5 text-amber-400 ml-auto" />
+                )}
+                {sidebarOpen && !isLocked && item.id === 'tasks' && pendingTasks > 0 && (
+                  <span className="ml-auto bg-indigo-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    {pendingTasks}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </nav>
 
         {/* Bottom */}
         <div className="p-3 border-t border-white/5 space-y-1">
+          {sidebarOpen && tier === 'free' && (
+            <button
+              onClick={() => setUpgradeModal('ai_advisor')}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 text-sm font-medium text-indigo-300 hover:from-indigo-600/30 hover:to-purple-600/30 transition-all mb-1"
+            >
+              <Zap className="w-4 h-4 fill-indigo-400 text-indigo-400 flex-shrink-0" />
+              Upgrade to Family
+            </button>
+          )}
+          {sidebarOpen && tier !== 'free' && (
+            <button
+              onClick={openPortal}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 text-sm transition-all"
+            >
+              <CreditCard className="w-4 h-4 flex-shrink-0" />
+              Manage Billing
+            </button>
+          )}
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 text-sm transition-all">
             <Settings className="w-5 h-5 flex-shrink-0" />
             {sidebarOpen && 'Settings'}

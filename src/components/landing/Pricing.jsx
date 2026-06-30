@@ -1,5 +1,6 @@
 import { Check, Zap, Shield } from 'lucide-react'
 import { useState } from 'react'
+import { useSubscription } from '../../hooks/useSubscription'
 
 const plans = [
   {
@@ -71,6 +72,17 @@ const plans = [
 
 export default function Pricing({ onGetStarted }) {
   const [annual, setAnnual] = useState(true)
+  const { tier, startCheckout } = useSubscription()
+
+  async function handlePlanClick(plan) {
+    if (plan.name === 'Free') { onGetStarted(); return }
+    if (tier !== 'free') { onGetStarted(); return }
+    try {
+      await startCheckout(plan.name.toLowerCase(), annual ? 'annual' : 'monthly')
+    } catch {
+      onGetStarted()
+    }
+  }
 
   return (
     <section id="pricing" className="py-24 relative">
@@ -152,10 +164,10 @@ export default function Pricing({ onGetStarted }) {
               </div>
 
               <button
-                onClick={onGetStarted}
+                onClick={() => handlePlanClick(plan)}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 mb-7 ${plan.buttonStyle}`}
               >
-                {plan.price.monthly === 0 ? 'Get Started Free' : `Start ${plan.name} Plan`}
+                {plan.price.monthly === 0 ? 'Get Started Free' : `Start ${plan.name} — 14-day trial`}
               </button>
 
               <div className="space-y-3">
