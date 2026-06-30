@@ -1,5 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '../lib/supabase'
+
+// On native apps, magic links must redirect back via the custom URL scheme
+// so the Capacitor appUrlOpen listener can intercept the auth tokens.
+const AUTH_REDIRECT = Capacitor.isNativePlatform()
+  ? 'carecircle://'
+  : window.location.origin
 
 const AuthContext = createContext(null)
 
@@ -26,9 +33,7 @@ export function AuthProvider({ children }) {
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
+      options: { emailRedirectTo: AUTH_REDIRECT },
     })
     return { error }
   }
@@ -36,9 +41,7 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
+      options: { redirectTo: AUTH_REDIRECT },
     })
     return { error }
   }

@@ -1,6 +1,7 @@
-import { X, Zap, Check, ArrowRight } from 'lucide-react'
+import { X, Zap, Check, ArrowRight, Globe } from 'lucide-react'
 import { useState } from 'react'
 import { useSubscription } from '../../hooks/useSubscription'
+import { isIOS } from '../../lib/platform'
 
 const FEATURES = {
   documents: {
@@ -38,6 +39,7 @@ export default function UpgradeModal({ feature, onClose }) {
   const { startCheckout } = useSubscription()
   const [interval, setInterval] = useState('annual')
   const [loading, setLoading] = useState(false)
+  const onApple = isIOS()
 
   const featureInfo = FEATURES[feature] || {
     title: 'Premium Feature',
@@ -120,17 +122,36 @@ export default function UpgradeModal({ feature, onClose }) {
           ))}
         </div>
 
-        <button
-          onClick={handleUpgrade}
-          disabled={loading}
-          className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5"
-        >
-          {loading ? 'Redirecting...' : <>Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
-        </button>
+        {onApple
+          ? (
+            /* Apple requires that in-app purchases go through their IAP system.
+               Rather than pay 30%, we direct users to subscribe on the web. */
+            <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-center">
+              <Globe className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
+              <p className="text-white font-semibold text-sm mb-1">Subscribe on the web</p>
+              <p className="text-slate-400 text-xs leading-relaxed mb-3">
+                Apple guidelines require subscriptions to be purchased outside the app.
+                Visit <span className="text-indigo-400 font-medium">carecircle.app</span> in your browser to start your free trial.
+              </p>
+              <p className="text-slate-600 text-xs">Then come back and enjoy full access here.</p>
+            </div>
+          )
+          : (
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/25 hover:-translate-y-0.5"
+            >
+              {loading ? 'Redirecting...' : <>Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
+            </button>
+          )
+        }
 
-        <p className="text-slate-600 text-xs text-center mt-3">
-          No charge today · Cancel anytime · {price}/month after trial
-        </p>
+        {!onApple && (
+          <p className="text-slate-600 text-xs text-center mt-3">
+            No charge today · Cancel anytime · {price}/month after trial
+          </p>
+        )}
       </div>
     </div>
   )

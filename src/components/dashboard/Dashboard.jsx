@@ -133,7 +133,7 @@ export default function Dashboard({ onLogout }) {
 
       {/* Sidebar */}
       <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-[#050510] border-r border-white/5 flex flex-col`}>
-        <div className="p-4 border-b border-white/5">
+        <div className="px-4 pb-4 pt-safe border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
               <Heart className="w-4 h-4 text-white fill-white" />
@@ -190,7 +190,7 @@ export default function Dashboard({ onLogout }) {
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/5 space-y-1">
+        <div className="p-3 pb-safe border-t border-white/5 space-y-1">
           {sidebarOpen && tier === 'free' && (
             <button
               onClick={() => setUpgradeModal('ai_advisor')}
@@ -215,7 +215,7 @@ export default function Dashboard({ onLogout }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-[#050510]/80 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="bg-[#050510]/80 backdrop-blur border-b border-white/5 px-6 pb-4 pt-safe flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-500 hover:text-white transition-colors">
               <div className="space-y-1.5">
