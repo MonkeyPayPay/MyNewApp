@@ -4,7 +4,12 @@ const links = {
   Product: ['Features', 'Pricing', 'Security', 'Mobile App', 'Changelog'],
   Company: ['About', 'Blog', 'Careers', 'Press', 'Contact'],
   Resources: ['Help Center', 'Caregiver Guide', 'Community', 'Webinars', 'API Docs'],
-  Legal: ['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'HIPAA'],
+  Legal: [
+    { label: 'Privacy Policy',   href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms'   },
+    { label: 'Cookie Policy',    href: '#'         },
+    { label: 'HIPAA',            href: '#'         },
+  ],
 }
 
 export default function Footer() {
@@ -41,9 +46,12 @@ export default function Footer() {
               <h4 className="text-white font-semibold text-sm mb-4">{section}</h4>
               <ul className="space-y-3">
                 {items.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-slate-500 hover:text-white text-sm transition-colors">
-                      {item}
+                  <li key={typeof item === 'string' ? item : item.label}>
+                    <a
+                      href={typeof item === 'string' ? '#' : item.href}
+                      className="text-slate-500 hover:text-white text-sm transition-colors"
+                    >
+                      {typeof item === 'string' ? item : item.label}
                     </a>
                   </li>
                 ))}

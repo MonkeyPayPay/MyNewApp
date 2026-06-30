@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
-  ChevronRight, Brain, Activity, MessageSquare, Upload, X,
+  ChevronRight, ChevronLeft, Brain, Activity, MessageSquare, Upload, X,
   TrendingUp, Users, Zap, CreditCard, Trash2, Loader
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -12,6 +12,8 @@ import { useTasks } from '../../hooks/useTasks'
 import { useExpenses } from '../../hooks/useExpenses'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useAIAdvisor } from '../../hooks/useAIAdvisor'
+import { useAppointments } from '../../hooks/useAppointments'
+import { useDocuments } from '../../hooks/useDocuments'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
 
@@ -78,15 +80,6 @@ const navItems = [
 
 const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_advisor' }
 
-const mockDocs = [
-  { name: 'Healthcare POA',  type: 'PDF',   updated: 'Jun 20', icon: '📋' },
-  { name: 'Medicare Card',   type: 'Image', updated: 'Jun 15', icon: '🪪' },
-  { name: 'Medication List', type: 'PDF',   updated: 'Jun 28', icon: '💊' },
-  { name: 'Living Will',     type: 'PDF',   updated: 'May 12', icon: '📜' },
-  { name: 'Insurance Cards', type: 'Image', updated: 'Jan 3',  icon: '🏥' },
-  { name: 'Dr. Chen Notes',  type: 'PDF',   updated: 'Jun 22', icon: '🩺' },
-]
-
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
 export default function Dashboard({ onLogout }) {
@@ -116,8 +109,10 @@ export default function Dashboard({ onLogout }) {
         return <TasksView tasks={tasks} loading={tasksLoading} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} members={members} />
       case 'expenses':
         return <ExpensesView circleId={circle?.id} members={members} />
+      case 'calendar':
+        return <CalendarView circleId={circle?.id} />
       case 'documents':
-        return <DocumentsView />
+        return <DocumentsView circleId={circle?.id} />
       case 'ai':
         return <AIAdvisorView can={can} onUpgrade={setUpgradeModal} />
       case 'settings':
@@ -838,9 +833,41 @@ function AddExpenseModal({ onClose, onSave }) {
   )
 }
 
-// ── DocumentsView (static — storage is a future layer) ───────────────────────
+// ── DocumentsView ─────────────────────────────────────────────────────────────
 
-function DocumentsView() {
+function DocumentsView({ circleId }) {
+  const { user }  = useAuth()
+  const { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl } = useDocuments(circleId)
+  const [dragOver, setDragOver] = useState(false)
+
+  async function handleFiles(files) {
+    for (const file of files) {
+      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} exceeds 50 MB limit`); continue }
+      await uploadDocument(file)
+    }
+  }
+
+  async function handleView(doc) {
+    const { url, error } = await getSignedUrl(doc.file_path)
+    if (url) window.open(url, '_blank', 'noopener')
+    else console.error('Signed URL error:', error)
+  }
+
+  function fmtSize(bytes) {
+    if (!bytes) return '—'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  }
+
+  function docIcon(mimeType, name) {
+    const ext = name?.split('.').pop()?.toLowerCase()
+    if (mimeType?.startsWith('image/') || ['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️'
+    if (mimeType === 'application/pdf' || ext === 'pdf') return '📋'
+    if (['doc','docx'].includes(ext)) return '📝'
+    return '📄'
+  }
+
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -848,28 +875,326 @@ function DocumentsView() {
           <h2 className="text-white font-bold text-xl">Document Vault</h2>
           <p className="text-slate-500 text-sm">Securely store and share important documents</p>
         </div>
-        <button className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-          <Upload className="w-4 h-4" /> Upload
-        </button>
+        <label className={`flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+          {uploading
+            ? <><Loader className="w-4 h-4 animate-spin" /> Uploading…</>
+            : <><Upload className="w-4 h-4" /> Upload</>}
+          <input
+            type="file" className="hidden" multiple
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx"
+            onChange={e => handleFiles(Array.from(e.target.files ?? []))}
+            disabled={uploading}
+          />
+        </label>
       </div>
-      <div className="glass rounded-2xl border-2 border-dashed border-white/10 hover:border-indigo-500/40 transition-colors p-10 text-center mb-6 cursor-pointer group">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+
+      <div
+        className={`glass rounded-2xl border-2 border-dashed transition-colors p-10 text-center mb-6 ${dragOver ? 'border-indigo-500/70 bg-indigo-500/5' : 'border-white/10 hover:border-indigo-500/40'}`}
+        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(Array.from(e.dataTransfer.files)) }}
+      >
+        <div className={`w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-4 transition-transform ${dragOver ? 'scale-125' : 'group-hover:scale-110'}`}>
           <Upload className="w-6 h-6 text-indigo-400" />
         </div>
-        <p className="text-white font-semibold mb-1">Drop files here to upload</p>
-        <p className="text-slate-500 text-sm">PDF, JPG, PNG up to 50MB · AI will auto-summarize your documents</p>
+        <p className="text-white font-semibold mb-1">{dragOver ? 'Drop to upload' : 'Drop files here to upload'}</p>
+        <p className="text-slate-500 text-sm">PDF, JPG, PNG, DOCX up to 50 MB</p>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockDocs.map((doc) => (
-          <div key={doc.name} className="glass rounded-2xl p-5 card-hover cursor-pointer">
-            <div className="flex items-start justify-between mb-4">
-              <div className="text-3xl">{doc.icon}</div>
-              <span className="text-slate-600 text-xs bg-white/5 px-2 py-1 rounded-lg font-mono">{doc.type}</span>
+
+      {loading && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(n => <div key={n} className="glass rounded-2xl h-32 animate-pulse" />)}
+        </div>
+      )}
+
+      {!loading && documents.length === 0 && (
+        <div className="glass rounded-2xl p-16 text-center border border-white/5">
+          <FolderOpen className="w-10 h-10 text-slate-700 mx-auto mb-4" />
+          <p className="text-white font-semibold mb-2">No documents yet</p>
+          <p className="text-slate-500 text-sm">Upload living wills, insurance cards, and medication lists.</p>
+        </div>
+      )}
+
+      {documents.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {documents.map((doc) => (
+            <div key={doc.id} className="glass rounded-2xl p-5 card-hover relative group">
+              <div className="flex items-start justify-between mb-4">
+                <div className="text-3xl">{docIcon(doc.mime_type, doc.name)}</div>
+                {doc.uploaded_by === user?.id && (
+                  <button
+                    onClick={() => deleteDocument(doc)}
+                    className="text-slate-700 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button onClick={() => handleView(doc)} className="block w-full text-left">
+                <p className="text-white font-semibold text-sm mb-1 truncate" title={doc.name}>{doc.name}</p>
+                <p className="text-slate-600 text-xs">{fmtSize(doc.file_size)} · {doc.profiles?.full_name ?? 'You'}</p>
+                {doc.ai_summary && (
+                  <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2">{doc.ai_summary}</p>
+                )}
+              </button>
             </div>
-            <p className="text-white font-semibold text-sm mb-1">{doc.name}</p>
-            <p className="text-slate-600 text-xs">Updated {doc.updated}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── CalendarView ──────────────────────────────────────────────────────────────
+
+function CalendarView({ circleId }) {
+  const { user }  = useAuth()
+  const { appointments, loading, addAppointment, deleteAppointment } = useAppointments(circleId)
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const d = new Date(); d.setDate(1); return d
+  })
+  const [selectedDay, setSelectedDay] = useState(null)
+  const [showModal, setShowModal]     = useState(false)
+
+  const year  = currentMonth.getFullYear()
+  const month = currentMonth.getMonth()
+
+  const firstDow  = new Date(year, month, 1).getDay()
+  const daysCount = new Date(year, month + 1, 0).getDate()
+  const cells     = [...Array(firstDow).fill(null), ...Array.from({ length: daysCount }, (_, i) => i + 1)]
+
+  const apptMap = {}
+  for (const a of appointments) {
+    const key = new Date(a.starts_at).toLocaleDateString('en-CA')
+    if (!apptMap[key]) apptMap[key] = []
+    apptMap[key].push(a)
+  }
+
+  const selectedKey = selectedDay
+    ? `${year}-${String(month + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
+    : null
+  const selectedAppts = selectedKey ? (apptMap[selectedKey] ?? []) : []
+
+  const todayKey = new Date().toLocaleDateString('en-CA')
+
+  const upcoming = appointments.filter(a => new Date(a.starts_at) >= new Date()).slice(0, 5)
+
+  return (
+    <div className="max-w-5xl mx-auto animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-white font-bold text-xl">Calendar</h2>
+          <p className="text-slate-500 text-sm">Appointments, visits, and care events</p>
+        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+        >
+          <Plus className="w-4 h-4" /> Add Appointment
+        </button>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Month grid */}
+        <div className="lg:col-span-2 glass rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h3 className="text-white font-bold text-lg">
+              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </h3>
+            <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
-        ))}
+
+          <div className="grid grid-cols-7 mb-2">
+            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+              <div key={d} className="text-center text-slate-600 text-xs font-medium pb-2">{d}</div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, i) => {
+              if (!day) return <div key={`e${i}`} />
+              const key     = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+              const hasAppt = !!apptMap[key]
+              const isSel   = selectedDay === day
+              const isToday = key === todayKey
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                  className={`relative aspect-square flex flex-col items-center justify-start pt-1.5 rounded-xl text-sm font-medium transition-all ${
+                    isSel    ? 'bg-indigo-600 text-white'
+                    : isToday ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {day}
+                  {hasAppt && <span className={`absolute bottom-1.5 w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-indigo-400'}`} />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Day panel */}
+        <div className="glass rounded-2xl p-5">
+          {selectedDay ? (
+            <>
+              <h3 className="text-white font-bold mb-1">
+                {new Date(year, month, selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </h3>
+              <p className="text-slate-500 text-xs mb-5">{selectedAppts.length} appointment{selectedAppts.length !== 1 ? 's' : ''}</p>
+
+              {selectedAppts.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+                  <p className="text-slate-600 text-sm">Nothing scheduled</p>
+                  <button onClick={() => setShowModal(true)} className="text-indigo-400 hover:text-indigo-300 text-xs mt-3 font-medium transition-colors">Add appointment →</button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedAppts.map(appt => (
+                    <div key={appt.id} className="bg-white/5 rounded-xl p-4 group">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-white font-semibold text-sm">{appt.title}</p>
+                        {appt.created_by === user?.id && (
+                          <button onClick={() => deleteAppointment(appt.id)} className="text-slate-700 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-indigo-400 text-xs mt-1">
+                        {new Date(appt.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {appt.ends_at && ` – ${new Date(appt.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      </p>
+                      {appt.location && <p className="text-slate-500 text-xs mt-1.5">📍 {appt.location}</p>}
+                      {appt.notes && <p className="text-slate-500 text-xs mt-2 leading-relaxed">{appt.notes}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm">Select a date</p>
+              <p className="text-slate-600 text-xs mt-1">Tap any day to see or add appointments</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Upcoming list */}
+      {upcoming.length > 0 && (
+        <div className="mt-6 glass rounded-2xl p-5">
+          <h3 className="text-white font-bold mb-4">Upcoming</h3>
+          <div className="space-y-3">
+            {upcoming.map(appt => (
+              <div key={appt.id} className="flex items-center gap-4 bg-white/5 rounded-xl p-3">
+                <div className="text-center flex-shrink-0 w-12">
+                  <p className="text-indigo-400 text-xs font-bold uppercase">
+                    {new Date(appt.starts_at).toLocaleDateString('en-US', { month: 'short' })}
+                  </p>
+                  <p className="text-white font-black text-xl leading-none">{new Date(appt.starts_at).getDate()}</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm">{appt.title}</p>
+                  <p className="text-slate-500 text-xs">
+                    {new Date(appt.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {appt.location && ` · ${appt.location}`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="mt-6 grid grid-cols-2 gap-4">
+          {[1,2].map(n => <div key={n} className="glass rounded-2xl h-14 animate-pulse" />)}
+        </div>
+      )}
+
+      {showModal && (
+        <AddAppointmentModal
+          defaultDateKey={selectedKey}
+          onClose={() => setShowModal(false)}
+          onSave={async (d) => { await addAppointment(d); setShowModal(false) }}
+        />
+      )}
+    </div>
+  )
+}
+
+function AddAppointmentModal({ defaultDateKey, onClose, onSave }) {
+  const defaultStart = defaultDateKey ? `${defaultDateKey}T09:00` : new Date().toISOString().slice(0, 16)
+  const [title,    setTitle]    = useState('')
+  const [startsAt, setStartsAt] = useState(defaultStart)
+  const [endsAt,   setEndsAt]   = useState('')
+  const [location, setLocation] = useState('')
+  const [notes,    setNotes]    = useState('')
+  const [saving,   setSaving]   = useState(false)
+
+  async function handleSave() {
+    if (!title.trim() || !startsAt) return
+    setSaving(true)
+    await onSave({
+      title:    title.trim(),
+      starts_at: new Date(startsAt).toISOString(),
+      ends_at:  endsAt ? new Date(endsAt).toISOString() : null,
+      location: location.trim() || null,
+      notes:    notes.trim() || null,
+    })
+    setSaving(false)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="glass rounded-2xl p-6 w-full max-w-md border border-white/10" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-white font-bold text-lg">New Appointment</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="space-y-4 mb-5">
+          <div>
+            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Title</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Dr. Chen Annual Checkup" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Starts</label>
+              <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+            </div>
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Ends (optional)</label>
+              <input type="datetime-local" value={endsAt} onChange={e => setEndsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Location</label>
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Mayo Clinic, 200 First St SW" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
+          </div>
+
+          <div>
+            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Notes</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Preparation notes, what to bring, etc." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-indigo-500/50 transition-all" />
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 text-sm font-medium hover:bg-white/5 transition-all">Cancel</button>
+          <button onClick={handleSave} disabled={!title.trim() || !startsAt || saving} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2">
+            {saving ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</> : 'Save Appointment'}
+          </button>
+        </div>
       </div>
     </div>
   )
