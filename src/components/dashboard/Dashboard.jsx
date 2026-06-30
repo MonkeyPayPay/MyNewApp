@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useSubscription } from '../../hooks/useSubscription'
 import UpgradeModal from '../ui/UpgradeModal'
+import NotificationSettings from './NotificationSettings'
 
 const mockFeed = [
   { id: 1, icon: '💊', category: 'Medication', text: 'Morning medications administered — Lisinopril 10mg, Metformin 500mg', author: 'Sarah', time: '8:12 AM', color: 'bg-emerald-500/20 text-emerald-400' },
@@ -43,13 +44,14 @@ const mockDocs = [
 ]
 
 const navItems = [
-  { id: 'home', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
-  { id: 'feed', icon: <Activity className="w-5 h-5" />, label: 'Care Feed' },
-  { id: 'tasks', icon: <ClipboardList className="w-5 h-5" />, label: 'Tasks' },
-  { id: 'calendar', icon: <Calendar className="w-5 h-5" />, label: 'Calendar' },
-  { id: 'expenses', icon: <DollarSign className="w-5 h-5" />, label: 'Expenses' },
-  { id: 'documents', icon: <FolderOpen className="w-5 h-5" />, label: 'Documents' },
-  { id: 'ai', icon: <Brain className="w-5 h-5" />, label: 'AI Advisor' },
+  { id: 'home',      icon: <Home className="w-5 h-5" />,          label: 'Dashboard' },
+  { id: 'feed',      icon: <Activity className="w-5 h-5" />,       label: 'Care Feed' },
+  { id: 'tasks',     icon: <ClipboardList className="w-5 h-5" />,  label: 'Tasks' },
+  { id: 'calendar',  icon: <Calendar className="w-5 h-5" />,       label: 'Calendar' },
+  { id: 'expenses',  icon: <DollarSign className="w-5 h-5" />,     label: 'Expenses' },
+  { id: 'documents', icon: <FolderOpen className="w-5 h-5" />,     label: 'Documents' },
+  { id: 'ai',        icon: <Brain className="w-5 h-5" />,          label: 'AI Advisor' },
+  { id: 'settings',  icon: <Bell className="w-5 h-5" />,           label: 'Notifications' },
 ]
 
 const priorityColors = {
@@ -97,6 +99,8 @@ export default function Dashboard({ onLogout }) {
         return <DocumentsView />
       case 'ai':
         return <AIAdvisorView />
+      case 'settings':
+        return <NotificationSettings />
       default:
         return <HomeView tasks={tasks} toggleTask={toggleTask} pendingTasks={pendingTasks} showAIInsight={showAIInsight} setShowAIInsight={setShowAIInsight} onUpgrade={setUpgradeModal} can={can} />
     }
@@ -181,10 +185,6 @@ export default function Dashboard({ onLogout }) {
               Manage Billing
             </button>
           )}
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 text-sm transition-all">
-            <Settings className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && 'Settings'}
-          </button>
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 text-sm transition-all"
