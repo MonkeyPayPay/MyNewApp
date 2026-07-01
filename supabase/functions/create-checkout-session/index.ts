@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       payment_method_types: ['card'],
       line_items: [{ price: PRICE_IDS[tier][interval], quantity: 1 }],
       mode: 'subscription',
-      success_url: `${origin}/dashboard?upgrade=success`,
+      success_url: `${origin}/?upgrade=success&plan=${tier}`,
       cancel_url: `${origin}/#pricing`,
       allow_promotion_codes: true,
       subscription_data: {

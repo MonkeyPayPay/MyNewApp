@@ -6,6 +6,8 @@ import { useSubscription } from './hooks/useSubscription'
 import { supabase } from './lib/supabase'
 import { usePushNotifications } from './hooks/usePushNotifications'
 import ErrorBoundary from './components/ui/ErrorBoundary'
+import OfflineBanner from './components/ui/OfflineBanner'
+import UpgradeSuccess from './components/ui/UpgradeSuccess'
 
 // Lazy-load all heavy pages — reduces initial bundle from ~540KB to <100KB
 const Landing    = lazy(() => import('./pages/Landing'))
@@ -64,6 +66,15 @@ function AppRouter() {
   const { startCheckout } = useSubscription()
   const [showAuth, setShowAuth]             = useState(false)
   const [onboardingDone, setOnboardingDone] = useState(false)
+  const [upgradeSuccess, setUpgradeSuccess] = useState(() => {
+    // Detect return from Stripe checkout: /dashboard?upgrade=success&plan=family
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('upgrade') === 'success') {
+      window.history.replaceState({}, '', '/')
+      return params.get('plan') ?? 'family'
+    }
+    return null
+  })
 
   usePushNotifications()
 
@@ -110,7 +121,12 @@ function AppRouter() {
     return <Onboarding onComplete={() => setOnboardingDone(true)} />
   }
 
-  return <Dashboard onLogout={signOut} onRegisterNavigate={fn => { window.__careCircleNavigate = fn }} />
+  return (
+    <>
+      {upgradeSuccess && <UpgradeSuccess tier={upgradeSuccess} onClose={() => setUpgradeSuccess(null)} />}
+      <Dashboard onLogout={signOut} onRegisterNavigate={fn => { window.__careCircleNavigate = fn }} />
+    </>
+  )
 }
 
 export default function App() {
@@ -122,6 +138,7 @@ export default function App() {
         <Suspense fallback={<Spinner />}>
           <AppRouter />
         </Suspense>
+        <OfflineBanner />
       </AuthProvider>
     </ErrorBoundary>
   )
