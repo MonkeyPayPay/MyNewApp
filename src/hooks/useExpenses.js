@@ -10,6 +10,16 @@ export function useExpenses(circleId) {
   useEffect(() => {
     if (!circleId) return
     fetchExpenses()
+
+    const channel = supabase
+      .channel(`expenses:${circleId}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'expenses',
+        filter: `circle_id=eq.${circleId}`,
+      }, fetchExpenses)
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [circleId])
 
   async function fetchExpenses() {

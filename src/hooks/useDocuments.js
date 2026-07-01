@@ -11,6 +11,16 @@ export function useDocuments(circleId) {
   useEffect(() => {
     if (!circleId) { setLoading(false); return }
     fetchDocs()
+
+    const channel = supabase
+      .channel(`documents:${circleId}`)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'documents',
+        filter: `circle_id=eq.${circleId}`,
+      }, fetchDocs)
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [circleId])
 
   async function fetchDocs() {

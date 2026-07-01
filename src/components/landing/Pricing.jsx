@@ -70,17 +70,22 @@ const plans = [
   },
 ]
 
-export default function Pricing({ onGetStarted }) {
+export default function Pricing({ onGetStarted, onGetStartedWithPlan }) {
   const [annual, setAnnual] = useState(true)
   const { tier, startCheckout } = useSubscription()
 
   async function handlePlanClick(plan) {
     if (plan.name === 'Free') { onGetStarted(); return }
+    const interval = annual ? 'annual' : 'monthly'
+    const planTier = plan.name.toLowerCase()
+    // Authenticated user on free tier → go straight to Stripe
     if (tier !== 'free') { onGetStarted(); return }
     try {
-      await startCheckout(plan.name.toLowerCase(), annual ? 'annual' : 'monthly')
+      await startCheckout(planTier, interval)
     } catch {
-      onGetStarted()
+      // Not authenticated — save intent and show sign-up; checkout resumes after auth
+      if (onGetStartedWithPlan) onGetStartedWithPlan(planTier, interval)
+      else onGetStarted()
     }
   }
 

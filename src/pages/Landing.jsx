@@ -8,7 +8,7 @@ import Pricing from '../components/landing/Pricing'
 import CTABanner from '../components/landing/CTABanner'
 import Footer from '../components/landing/Footer'
 
-export default function Landing({ onGetStarted }) {
+export default function Landing({ onGetStarted, onGetStartedWithPlan }) {
   return (
     <div className="min-h-screen bg-[#050510]">
       <Navbar onGetStarted={onGetStarted} />
@@ -17,7 +17,7 @@ export default function Landing({ onGetStarted }) {
       <Features />
       <HowItWorks />
       <Testimonials />
-      <Pricing onGetStarted={onGetStarted} />
+      <Pricing onGetStarted={onGetStarted} onGetStartedWithPlan={onGetStartedWithPlan} />
       <CTABanner onGetStarted={onGetStarted} />
       <Footer />
     </div>
