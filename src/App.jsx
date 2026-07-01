@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { useCircle } from './hooks/useCircle'
 import { supabase } from './lib/supabase'
+import { usePushNotifications } from './hooks/usePushNotifications'
 import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
@@ -69,6 +70,8 @@ function AppRouter() {
   const [showAuth, setShowAuth]         = useState(false)
   const [onboardingDone, setOnboardingDone] = useState(false)
 
+  usePushNotifications()
+
   // Capture invite token from /join?token=... on first render
   const [inviteToken, setInviteToken] = useState(() => {
     if (window.location.pathname === '/join') {
@@ -102,7 +105,7 @@ function AppRouter() {
     return <Onboarding onComplete={() => setOnboardingDone(true)} />
   }
 
-  return <Dashboard onLogout={signOut} />
+  return <Dashboard onLogout={signOut} onRegisterNavigate={fn => { window.__careCircleNavigate = fn }} />
 }
 
 export default function App() {

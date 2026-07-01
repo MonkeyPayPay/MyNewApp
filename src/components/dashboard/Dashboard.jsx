@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
@@ -82,7 +82,7 @@ const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_adviso
 
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
-export default function Dashboard({ onLogout }) {
+export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const { user } = useAuth()
   const { circle, recipient, members, loading: circleLoading, inviteMember } = useCircle()
   const { tier, can, openPortal } = useSubscription()
@@ -92,6 +92,9 @@ export default function Dashboard({ onLogout }) {
   const [sidebarOpen, setSidebarOpen]   = useState(true)
   const [upgradeModal, setUpgradeModal] = useState(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
+
+  // Register deep-link handler for push notification taps
+  useEffect(() => { onRegisterNavigate?.(navigateTo) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const firstName  = user?.user_metadata?.full_name?.split(' ')[0] ?? 'Me'
   const initials   = user?.user_metadata?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '?'
