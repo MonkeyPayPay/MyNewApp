@@ -3,6 +3,7 @@ import { Heart, User, Mail, ArrowRight, ArrowLeft, CheckCircle, Plus, X } from '
 import { useAuth } from '../context/AuthContext'
 import { useCircle } from '../hooks/useCircle'
 import { supabase } from '../lib/supabase'
+import { track } from '../lib/analytics'
 
 const STEPS = ['Your name', 'Care recipient', 'Invite family', 'You\'re set']
 
@@ -39,6 +40,7 @@ export default function Onboarding({ onComplete }) {
       setError(error.message)
     } else {
       setCircleId(circle.id)
+      track('circle_created')
       next()
     }
   }

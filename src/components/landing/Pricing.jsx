@@ -44,7 +44,6 @@ const plans = [
     ],
     missing: [
       'Professional caregiver access',
-      'HIPAA Business Associate Agreement',
     ],
   },
   {
@@ -61,7 +60,7 @@ const plans = [
       'Medication interaction alerts',
       'Health records integration',
       'Document vault (5GB)',
-      'HIPAA BAA included',
+      'Care summary reports for doctors',
       'Phone support',
       'Custom care plans',
       'Insurance claim assistant',

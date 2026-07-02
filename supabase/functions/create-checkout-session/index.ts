@@ -1,5 +1,6 @@
 import Stripe from 'npm:stripe@14'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-06-20' })
 
@@ -15,13 +16,10 @@ const PRICE_IDS: Record<string, Record<string, string>> = {
 }
 
 Deno.serve(async (req) => {
+  const CORS = corsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
-      },
-    })
+    return new Response(null, { headers: CORS })
   }
 
   try {
@@ -34,13 +32,13 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
     }
 
     const { tier, interval = 'monthly' } = await req.json()
 
     if (!PRICE_IDS[tier]?.[interval]) {
-      return new Response(JSON.stringify({ error: 'Invalid plan' }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'Invalid plan' }), { status: 400, headers: CORS })
     }
 
     // Get or create Stripe customer
@@ -86,15 +84,12 @@ Deno.serve(async (req) => {
     })
 
     return new Response(JSON.stringify({ url: session.url }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', ...CORS },
     })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...CORS },
     })
   }
 })

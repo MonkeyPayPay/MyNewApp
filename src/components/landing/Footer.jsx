@@ -8,7 +8,7 @@ const links = {
     { label: 'Privacy Policy',   href: '/privacy' },
     { label: 'Terms of Service', href: '/terms'   },
     { label: 'Cookie Policy',    href: '#'         },
-    { label: 'HIPAA',            href: '#'         },
+    { label: 'Security',         href: '#'         },
   ],
 }
 

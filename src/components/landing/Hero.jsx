@@ -62,7 +62,7 @@ export default function Hero({ onGetStarted }) {
               {[
                 '53M caregivers in the US',
                 'Free forever plan',
-                'HIPAA-ready',
+                'Encrypted & private',
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Heart, Users, CheckCircle, AlertCircle, Loader, ArrowRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { track } from '../lib/analytics'
 
 export default function JoinCircle({ token, onComplete }) {
   const [preview,  setPreview]  = useState(null)
@@ -24,7 +25,7 @@ export default function JoinCircle({ token, onComplete }) {
     const { data, error: err } = await supabase.rpc('accept_invitation', { p_token: token })
     if (err) { setError(err.message); setJoining(false) }
     else if (data?.error) { setError(data.error); setJoining(false) }
-    else { setJoined(true) }
+    else { setJoined(true); track('invite_accepted') }
   }
 
   return (

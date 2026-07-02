@@ -5,17 +5,22 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import Anthropic from 'npm:@anthropic-ai/sdk'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 Deno.serve(async (req) => {
+  const CORS = corsHeaders(req, 'authorization, x-client-info, apikey, content-type')
+
+  function json(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    })
+  }
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: CORS })
   }
 
   try {
@@ -165,9 +170,3 @@ Respond with ONLY the JSON array — no markdown fences, no commentary.`
   }
 })
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
-}

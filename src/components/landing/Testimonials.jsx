@@ -88,7 +88,7 @@ export default function Testimonials() {
         {/* Trust badges */}
         <div className="mt-12 flex flex-wrap justify-center items-center gap-8">
           {[
-            { label: 'HIPAA Ready', icon: '🔒' },
+            { label: 'Encrypted & Private', icon: '🔒' },
             { label: '4.9/5 App Store', icon: '⭐' },
             { label: '50,000+ families', icon: '👨‍👩‍👧‍👦' },
             { label: '24/7 Support', icon: '💬' },

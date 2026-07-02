@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Zap, X, Check } from 'lucide-react'
+import { track } from '../../lib/analytics'
 
 const PERKS = {
   family: [
@@ -11,7 +12,7 @@ const PERKS = {
   pro: [
     'Everything in Family',
     'Professional caregiver portal',
-    'HIPAA BAA included',
+    'Medication interaction alerts',
     'Phone support',
   ],
 }
@@ -20,10 +21,11 @@ export default function UpgradeSuccess({ tier = 'family', onClose }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
+    track('trial_started', { plan: tier }, { once: true })
     // Tiny delay so the animation plays after mount
     const t = setTimeout(() => setShow(true), 50)
     return () => clearTimeout(t)
-  }, [])
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
   function dismiss() {
     setShow(false)

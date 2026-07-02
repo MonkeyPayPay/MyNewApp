@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { track } from '../lib/analytics'
 import Navbar from '../components/landing/Navbar'
 import Hero from '../components/landing/Hero'
 import Stats from '../components/landing/Stats'
@@ -9,6 +11,8 @@ import CTABanner from '../components/landing/CTABanner'
 import Footer from '../components/landing/Footer'
 
 export default function Landing({ onGetStarted, onGetStartedWithPlan }) {
+  useEffect(() => { track('page_view', { page: 'landing' }, { once: true }) }, [])
+
   return (
     <div className="min-h-screen bg-[#050510]">
       <Navbar onGetStarted={onGetStarted} />

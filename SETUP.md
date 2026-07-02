@@ -13,6 +13,9 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 
 -- 3. Security & correctness fixes (profile visibility, push_token column)
 -- Copy and run: supabase/fixes.sql
+
+-- 4. Funnel analytics (events table + example funnel query)
+-- Copy and run: supabase/analytics.sql
 ```
 
 ## 2. Supabase Edge Functions

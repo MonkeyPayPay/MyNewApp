@@ -121,22 +121,30 @@ spending anything on more features:
 - 🟡 **SETUP.md documented wrong Stripe secret names** (functions read
   `STRIPE_PRICE_FAMILY_MONTHLY` etc.). Corrected.
 
+### Also fixed (second pass)
+- CORS tightened from `*` to an origin allowlist (`_shared/cors.ts`:
+  APP_URL + Capacitor WebView origins + local dev).
+- Android hardware back button now navigates back; exits only at the root.
+- Uploads bounded at 10MB with inline error UI; `summarize-document`
+  skips AI for oversized files server-side.
+- HIPAA claims removed from Hero, Pricing, Testimonials, Footer, and the
+  upgrade modal (privacy.html/terms.html already disclaimed correctly).
+  Revisit only with counsel and signed vendor BAAs.
+- Funnel analytics shipped: write-only `events` table
+  (supabase/analytics.sql) + `track()` helper wired to page_view, signup,
+  circle_created, invite_sent, invite_accepted, checkout_started,
+  trial_started. Funnel query included in the SQL file.
+- Test suite added (vitest, `npm test`): paywall gating
+  (`src/lib/entitlements.js`) and CSV export escaping (`src/lib/csv.js`).
+
 ### Known remaining (accepted for now)
-- CORS is `*` on Edge Functions — acceptable because auth is enforced
-  per-request, but tightening to the app origin is cheap hardening.
-- Android hardware back button exits the app immediately (should navigate
-  back within the app first).
-- `summarize-document` base64-encodes via a per-byte loop — fine for
-  typical documents, slow for very large files. Bound uploads (~10MB) or
-  chunk the encoding if large files become common.
 - Push notification *sending* is not implemented (tokens are collected;
-  an Edge Function using FCM/APNs is future work).
-- No automated tests. Highest-value first tests: RLS policies (Supabase
-  has a pgTAP harness) and the Stripe webhook tier mapping.
-- "HIPAA" appears in the footer and Pro tier copy. **Do not sell the Pro
-  HIPAA BAA claim until a lawyer and a signed BAA with Supabase/vendors
-  actually back it.** This is the single biggest compliance landmine in
-  the repo.
+  an Edge Function using FCM/APNs is future work — gated on validation).
+- RLS policies untested by automation; pgTAP harness is the eventual home.
+- Testimonials/stats on the landing page ("50,000+ families",
+  "4.9/5 App Store") are placeholder marketing copy — replace with real
+  numbers or remove before any paid traffic; false claims poison ad
+  accounts and trust.
 
 ## 8. Roadmap (sequenced by evidence, not ambition)
 

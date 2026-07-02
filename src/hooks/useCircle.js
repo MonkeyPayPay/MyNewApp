@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { track } from '../lib/analytics'
 
 export function useCircle() {
   const { user } = useAuth()
@@ -90,6 +91,7 @@ export function useCircle() {
     // invoke to avoid duplicate emails.)
     if (!error && data) {
       supabase.functions.invoke('send-invite', { body: { invitation_id: data.id } }).catch(() => {})
+      track('invite_sent')
     }
 
     return { data, error }

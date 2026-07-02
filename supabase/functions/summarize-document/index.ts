@@ -8,16 +8,12 @@
  */
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY')! })
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
-  'Content-Type': 'application/json',
-}
-
 Deno.serve(async (req) => {
+  const CORS = { ...corsHeaders(req), 'Content-Type': 'application/json' }
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
   const supabase = createClient(
@@ -60,9 +56,12 @@ Deno.serve(async (req) => {
   const isImage = doc.mime_type?.startsWith('image/')
   const isPdf   = doc.mime_type === 'application/pdf'
 
+  // Skip AI for oversized files — base64 + model limits make them impractical
+  const MAX_AI_BYTES = 10 * 1024 * 1024
+
   let summary: string
 
-  if (isImage || isPdf) {
+  if ((isImage || isPdf) && (doc.file_size ?? 0) <= MAX_AI_BYTES) {
     // Fetch file bytes via signed URL
     const { data: { signedUrl }, error: urlErr } = await supabase.storage
       .from('documents')

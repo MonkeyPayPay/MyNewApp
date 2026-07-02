@@ -5,6 +5,7 @@ import { useCircle } from './hooks/useCircle'
 import { useSubscription } from './hooks/useSubscription'
 import { supabase } from './lib/supabase'
 import { usePushNotifications } from './hooks/usePushNotifications'
+import { track } from './lib/analytics'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import OfflineBanner from './components/ui/OfflineBanner'
 import UpgradeSuccess from './components/ui/UpgradeSuccess'
@@ -43,7 +44,11 @@ async function initNativePlugins() {
       }
     })
 
-    CapApp.addListener('backButton', () => { CapApp.exitApp() })
+    // Android hardware back — go back in history; exit only at the root
+    CapApp.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) window.history.back()
+      else CapApp.exitApp()
+    })
     await SplashScreen.hide({ fadeOutDuration: 300 })
   } catch (err) {
     console.warn('Capacitor plugin init error:', err)
@@ -86,6 +91,16 @@ function AppRouter() {
     }
     return null
   })
+
+  // Funnel: count a signup once, when a freshly created account first appears
+  useEffect(() => {
+    if (!user) return
+    const isNew = Date.now() - new Date(user.created_at).getTime() < 5 * 60 * 1000
+    if (isNew && !localStorage.getItem('cc_signup_tracked')) {
+      localStorage.setItem('cc_signup_tracked', '1')
+      track('signup')
+    }
+  }, [user])
 
   // After auth + circle ready: fulfil any pending checkout intent from the landing page
   useEffect(() => {

@@ -14,25 +14,23 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { inviteEmail } from '../_shared/emails.ts'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 const FROM = 'CareCircle <hello@carecircle.app>'
 const APP_URL = Deno.env.get('APP_URL') || 'https://carecircle.app'
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-webhook-secret',
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...CORS },
-  })
-}
-
 Deno.serve(async (req) => {
+  const CORS = corsHeaders(req, 'authorization, content-type, x-webhook-secret')
+
+  function json(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json', ...CORS },
+    })
+  }
+
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
   const supabase = createClient(

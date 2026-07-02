@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { track } from '../lib/analytics'
+import { TIERS, canAccess } from '../lib/entitlements'
 
-export const TIERS = {
-  free: { label: 'Free', rank: 0 },
-  family: { label: 'Family', rank: 1 },
-  pro: { label: 'Pro', rank: 2 },
-}
+export { TIERS }
 
 export function useSubscription() {
   const { user, session } = useAuth()
@@ -39,6 +37,7 @@ export function useSubscription() {
   }
 
   async function startCheckout(tier, interval = 'monthly') {
+    track('checkout_started', { tier, interval })
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
       body: { tier, interval },
     })
@@ -53,20 +52,7 @@ export function useSubscription() {
   }
 
   const tier = subscription?.tier ?? 'free'
-  const isActive = ['active', 'trialing'].includes(subscription?.status ?? 'active')
-
-  const can = (feature) => {
-    const tierRank = TIERS[tier]?.rank ?? 0
-    const gates = {
-      documents:          tierRank >= 1,  // family+
-      expenses:           tierRank >= 1,
-      ai_advisor:         tierRank >= 1,
-      unlimited_members:  tierRank >= 1,
-      professional_carer: tierRank >= 2,  // pro only
-      hipaa:              tierRank >= 2,
-    }
-    return isActive && (gates[feature] ?? true)
-  }
+  const can = (feature) => canAccess(tier, subscription?.status, feature)
 
   return { subscription, tier, loading, can, startCheckout, openPortal }
 }

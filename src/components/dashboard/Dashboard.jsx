@@ -16,6 +16,7 @@ import { useAppointments } from '../../hooks/useAppointments'
 import { useDocuments } from '../../hooks/useDocuments'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
+import { buildExpensesCsv } from '../../lib/csv'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -721,15 +722,7 @@ function ExpensesView({ circleId, members }) {
   const myTotal     = monthExp.filter(e => e.paid_by === user?.id).reduce((s, e) => s + e.amount_cents, 0)
 
   function exportCSV() {
-    const header = ['Date', 'Description', 'Category', 'Amount', 'Paid By']
-    const rows   = expenses.map(e => [
-      e.expense_date ?? '',
-      `"${(e.label ?? '').replace(/"/g, '""')}"`,
-      e.category ?? '',
-      (e.amount_cents / 100).toFixed(2),
-      `"${(e.payer?.full_name ?? 'Unknown').replace(/"/g, '""')}"`,
-    ])
-    const csv  = [header, ...rows].map(r => r.join(',')).join('\n')
+    const csv  = buildExpensesCsv(expenses)
     const blob = new Blob([csv], { type: 'text/csv' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
@@ -879,15 +872,23 @@ function AddExpenseModal({ onClose, onSave }) {
 
 // ── DocumentsView ─────────────────────────────────────────────────────────────
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
 function DocumentsView({ circleId }) {
   const { user }  = useAuth()
   const { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl } = useDocuments(circleId)
   const [dragOver, setDragOver] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
 
   async function handleFiles(files) {
+    setUploadError(null)
     for (const file of files) {
-      if (file.size > 50 * 1024 * 1024) { alert(`${file.name} exceeds 50 MB limit`); continue }
-      await uploadDocument(file)
+      if (file.size > MAX_UPLOAD_BYTES) {
+        setUploadError(`${file.name} is larger than 10 MB — please upload a smaller file.`)
+        continue
+      }
+      const { error } = await uploadDocument(file)
+      if (error) setUploadError(`Couldn't upload ${file.name}: ${error.message}`)
     }
   }
 
@@ -942,8 +943,12 @@ function DocumentsView({ circleId }) {
           <Upload className="w-6 h-6 text-indigo-400" />
         </div>
         <p className="text-white font-semibold mb-1">{dragOver ? 'Drop to upload' : 'Drop files here to upload'}</p>
-        <p className="text-slate-500 text-sm">PDF, JPG, PNG, DOCX up to 50 MB</p>
+        <p className="text-slate-500 text-sm">PDF, JPG, PNG, DOCX up to 10 MB</p>
       </div>
+
+      {uploadError && (
+        <p className="text-rose-400 text-sm bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 mb-6">{uploadError}</p>
+      )}
 
       {loading && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
