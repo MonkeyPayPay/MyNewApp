@@ -84,6 +84,14 @@ export function useCircle() {
       .insert({ circle_id: circle.id, invited_by: user.id, email })
       .select()
       .single()
+
+    // Send the email immediately — no Database Webhook config required.
+    // (If you configure the invitations DB webhook instead, remove this
+    // invoke to avoid duplicate emails.)
+    if (!error && data) {
+      supabase.functions.invoke('send-invite', { body: { invitation_id: data.id } }).catch(() => {})
+    }
+
     return { data, error }
   }
 

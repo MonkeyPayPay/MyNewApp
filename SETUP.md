@@ -11,8 +11,8 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 -- 2. Storage bucket + RLS
 -- Copy and run: supabase/storage.sql
 
--- 3. Add push_token column to profiles (for push notifications)
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS push_token text;
+-- 3. Security & correctness fixes (profile visibility, push_token column)
+-- Copy and run: supabase/fixes.sql
 ```
 
 ## 2. Supabase Edge Functions
@@ -40,9 +40,28 @@ supabase secrets set \
   RESEND_API_KEY=re_... \
   STRIPE_SECRET_KEY=sk_live_... \
   STRIPE_WEBHOOK_SECRET=whsec_... \
-  STRIPE_FAMILY_PRICE_ID=price_... \
-  STRIPE_PRO_PRICE_ID=price_...
+  STRIPE_PRICE_FAMILY_MONTHLY=price_... \
+  STRIPE_PRICE_FAMILY_ANNUAL=price_... \
+  STRIPE_PRICE_PRO_MONTHLY=price_... \
+  STRIPE_PRICE_PRO_ANNUAL=price_... \
+  WEBHOOK_SECRET=$(openssl rand -hex 24) \
+  APP_URL=https://my-new-app-lyart.vercel.app
 ```
+
+`WEBHOOK_SECRET` protects `send-notification` and `weekly-digest` from
+unauthenticated calls. Add the same value as an `x-webhook-secret` HTTP
+header wherever those functions are invoked:
+
+- **send-notification** — Database Webhooks on `tasks` INSERT and
+  `care_feed_entries` INSERT (Dashboard → Database → Webhooks → add header)
+- **weekly-digest** — the cron schedule's HTTP headers (Dashboard →
+  Edge Functions → weekly-digest → Schedule, cron `0 9 * * 1`)
+
+**Invites need no webhook**: the app calls `send-invite` directly after
+creating an invitation. If you prefer a Database Webhook on `invitations`
+INSERT instead, add the `x-webhook-secret` header there and remove the
+`functions.invoke('send-invite', ...)` call in `src/hooks/useCircle.js`
+to avoid duplicate emails.
 
 ## 4. Stripe Products
 

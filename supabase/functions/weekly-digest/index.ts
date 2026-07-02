@@ -7,10 +7,17 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { weeklyDigestEmail } from '../_shared/emails.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
 const FROM = 'CareCircle <hello@carecircle.app>'
 const APP_URL = Deno.env.get('APP_URL') || 'https://carecircle.app'
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // Only the scheduler (configured with the x-webhook-secret header) may
+  // invoke this — otherwise anyone can spam every subscriber with digests.
+  if (WEBHOOK_SECRET && req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

@@ -19,7 +19,16 @@ async function sendEmail(to: string, subject: string, html: string) {
   return res.json()
 }
 
+const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET')
+
 Deno.serve(async (req) => {
+  // Only Database Webhooks (configured with the x-webhook-secret header)
+  // may invoke this — otherwise anyone with the anon key can trigger
+  // arbitrary emails from CareCircle's sender address.
+  if (WEBHOOK_SECRET && req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
   const payload = await req.json()
   const { type, table, record } = payload  // Supabase webhook shape
 

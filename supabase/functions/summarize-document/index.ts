@@ -2,6 +2,9 @@
  * Summarizes an uploaded document using Claude's vision/document API.
  * Called from the client immediately after a document is uploaded.
  * Supports PDF and image files.
+ *
+ * Auth: requires a valid user JWT; the caller must be a member of the
+ * circle that owns the document. The anon key alone is rejected.
  */
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -22,6 +25,14 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
+
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(
+    authHeader.replace('Bearer ', '')
+  )
+  if (authErr || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
+
   const { documentId } = await req.json()
   if (!documentId) return new Response(JSON.stringify({ error: 'documentId required' }), { status: 400, headers: CORS })
 
@@ -32,6 +43,16 @@ Deno.serve(async (req) => {
     .single()
 
   if (docErr || !doc) return new Response(JSON.stringify({ error: 'Document not found' }), { status: 404, headers: CORS })
+
+  // Verify the caller belongs to the circle that owns this document
+  const { data: memberRow } = await supabase
+    .from('circle_members')
+    .select('circle_id')
+    .eq('circle_id', doc.circle_id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!memberRow) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: CORS })
 
   // Skip if already summarized
   if (doc.ai_summary) return new Response(JSON.stringify({ summary: doc.ai_summary, cached: true }), { headers: CORS })
