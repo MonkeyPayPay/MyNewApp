@@ -146,6 +146,21 @@ spending anything on more features:
   numbers or remove before any paid traffic; false claims poison ad
   accounts and trust.
 
+### Accessibility-focused dashboard redesign
+The home dashboard was rebuilt around a senior-friendly interaction model:
+a single "Right Now / Next" timeline (replaces the old 4-stat-card grid),
+a Dynamic-Island-style status header, oversized tap targets (56px+) for
+vitals logging (mood, water, blood pressure, pain scale) instead of text
+inputs, and slide-over panels instead of full-screen modals so context is
+never lost. Motion uses calm ease-out curves (no snappy overshoot) and
+respects `prefers-reduced-motion`. New: `supabase/vitals.sql` (quick-log
+table), `src/hooks/useVitals.js`, `src/lib/haptics.js` (native tap/success
+feedback via `@capacitor/haptics`), and `src/components/dashboard/care/*`.
+Not yet done: this hasn't been visually verified in a real browser session
+(sandbox has no Supabase auth credentials) — validate on a real account
+before shipping to users, particularly the sticky-header scroll behavior
+and VoiceOver/TalkBack pass over the new tap targets.
+
 ## 8. Roadmap (sequenced by evidence, not ambition)
 
 1. **Now → validation gate**: instrument funnel, run §6. Build nothing new.

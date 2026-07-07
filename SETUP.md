@@ -16,6 +16,9 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 
 -- 4. Funnel analytics (events table + example funnel query)
 -- Copy and run: supabase/analytics.sql
+
+-- 5. Vitals / daily wellness log (mood, water, blood pressure, pain)
+-- Copy and run: supabase/vitals.sql
 ```
 
 ## 2. Supabase Edge Functions

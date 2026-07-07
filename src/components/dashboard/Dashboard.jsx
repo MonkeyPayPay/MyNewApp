@@ -3,7 +3,7 @@ import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
   ChevronRight, ChevronLeft, Brain, Activity, MessageSquare, Upload, X,
-  TrendingUp, Users, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail
+  TrendingUp, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
@@ -17,6 +17,7 @@ import { useDocuments } from '../../hooks/useDocuments'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
 import { buildExpensesCsv } from '../../lib/csv'
+import CareTimeline from './care/CareTimeline'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const renderContent = () => {
     switch (activeNav) {
       case 'home':
-        return <HomeView circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
+        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
       case 'feed':
         return <FeedView circleId={circle?.id} />
       case 'tasks':
@@ -127,7 +128,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
       case 'settings':
         return <NotificationSettings />
       default:
-        return <HomeView circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
+        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
     }
   }
 
@@ -257,175 +258,6 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
         <main className="flex-1 overflow-y-auto p-6">
           {renderContent()}
         </main>
-      </div>
-    </div>
-  )
-}
-
-// ── HomeView ──────────────────────────────────────────────────────────────────
-
-function HomeView({ circleId, recipient, members, tasks, toggleTask, can, onUpgrade, onNavigate }) {
-  const { entries } = useCareFeed(circleId)
-  const { expenses } = useExpenses(circleId)
-
-  const today   = new Date().toISOString().split('T')[0]
-  const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
-  const weekAgo  = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
-
-  const todayTasks    = tasks.filter(t => t.due_date === today)
-  const completedToday = todayTasks.filter(t => t.completed_at).length
-  const upcoming      = tasks.filter(t => t.due_date > today && t.due_date <= nextWeek && !t.completed_at)
-                             .sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 3)
-  const weeklyTotal   = expenses.filter(e => e.expense_date >= weekAgo).reduce((s, e) => s + e.amount_cents, 0)
-
-  return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
-      {/* AI banner */}
-      {can('ai_advisor')
-        ? (
-          <div className="relative glass rounded-2xl p-5 border border-indigo-500/20 overflow-hidden cursor-pointer" onClick={() => onNavigate('ai')}>
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/5" />
-            <div className="relative flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">AI Care Advisor</span>
-                  <span className="bg-indigo-500/20 text-indigo-400 text-xs px-2 py-0.5 rounded-full font-medium">Active</span>
-                </div>
-                <p className="text-slate-300 text-sm">Patterns detected from your care logs. <span className="text-indigo-400 font-medium">View insights →</span></p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="glass rounded-2xl p-5 border border-white/5 flex items-center gap-4 cursor-pointer" onClick={() => onUpgrade('ai_advisor')}>
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-              <Brain className="w-5 h-5 text-slate-600" />
-            </div>
-            <p className="text-slate-500 text-sm flex-1">Unlock <span className="text-white font-medium">AI Care Advisor</span> for pattern-based insights from your care logs.</p>
-            <span className="text-xs bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full font-bold flex-shrink-0">Upgrade</span>
-          </div>
-        )
-      }
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Today's Tasks", value: `${completedToday}/${todayTasks.length}`, sub: 'completed', icon: <CheckCircle className="w-5 h-5" />, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'This Week', value: weeklyTotal > 0 ? `$${(weeklyTotal / 100).toFixed(0)}` : '$0', sub: 'in expenses', icon: <DollarSign className="w-5 h-5" />, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-          { label: 'Open Tasks', value: tasks.filter(t => !t.completed_at).length, sub: 'across all dates', icon: <ClipboardList className="w-5 h-5" />, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-          { label: 'Family Members', value: members.length || '—', sub: 'in this circle', icon: <Users className="w-5 h-5" />, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-        ].map((stat) => (
-          <div key={stat.label} className="glass rounded-2xl p-5">
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center ${stat.color} mb-3`}>{stat.icon}</div>
-            <div className="text-white font-black text-3xl mb-1">{stat.value}</div>
-            <div className="text-slate-400 text-xs">{stat.label}</div>
-            <div className="text-slate-600 text-xs">{stat.sub}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Main grid */}
-      <div className="grid lg:grid-cols-5 gap-6">
-        {/* Feed preview */}
-        <div className="lg:col-span-3 glass rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-white font-bold">Recent Care Activity</h2>
-            <button onClick={() => onNavigate('feed')} className="text-indigo-400 text-sm font-medium hover:text-indigo-300 transition-colors flex items-center gap-1">
-              View all <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          {entries.length === 0
-            ? (
-              <div className="py-8 text-center">
-                <p className="text-slate-600 text-sm">No care activity logged yet.</p>
-                <button onClick={() => onNavigate('feed')} className="text-indigo-400 text-sm font-medium mt-2 hover:text-indigo-300 transition-colors">Log the first entry →</button>
-              </div>
-            )
-            : (
-              <div className="space-y-3">
-                {entries.slice(0, 4).map((item) => {
-                  const meta = CATEGORY_META[item.category] ?? CATEGORY_META.note
-                  return (
-                    <div key={item.id} className="flex items-start gap-4 bg-white/5 rounded-xl p-4">
-                      <span className="text-xl flex-shrink-0 mt-0.5">{meta.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-slate-200 text-sm leading-relaxed">{item.body}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}`}>{meta.label}</span>
-                          <span className="text-slate-600 text-xs">{item.profiles?.full_name ?? 'Someone'} · {timeAgo(item.created_at)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          }
-          <button onClick={() => onNavigate('feed')} className="w-full mt-4 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-sm font-medium py-3 rounded-xl transition-all">
-            <Plus className="w-4 h-4" /> Log care activity
-          </button>
-        </div>
-
-        {/* Right column */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="glass rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-bold">Today's Tasks</h2>
-              <span className="text-slate-500 text-xs">{completedToday} of {todayTasks.length} done</span>
-            </div>
-            {todayTasks.length === 0
-              ? <p className="text-slate-600 text-sm text-center py-4">Nothing due today 🎉</p>
-              : (
-                <div className="space-y-2.5">
-                  {todayTasks.map((task) => (
-                    <button key={task.id} onClick={() => toggleTask(task.id)} className="w-full flex items-start gap-3 bg-white/5 hover:bg-white/10 rounded-xl p-3 text-left transition-all group">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${task.completed_at ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600 group-hover:border-emerald-500'}`}>
-                        {task.completed_at && <CheckCircle className="w-3.5 h-3.5 text-white fill-white" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${task.completed_at ? 'line-through text-slate-600' : 'text-slate-200'}`}>{task.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLORS[task.priority] ?? PRIORITY_COLORS.medium}`}>{task.priority}</span>
-                          <span className="text-slate-600 text-xs">{task.assigned?.full_name ?? 'Unassigned'}</span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )
-            }
-          </div>
-
-          <div className="glass rounded-2xl p-5">
-            <h2 className="text-white font-bold mb-4">Upcoming</h2>
-            {upcoming.length === 0
-              ? <p className="text-slate-600 text-sm text-center py-4">No upcoming tasks this week.</p>
-              : (
-                <div className="space-y-3">
-                  {upcoming.map((task) => {
-                    const d   = new Date(task.due_date + 'T00:00:00')
-                    const mon = d.toLocaleDateString('en-US', { month: 'short' })
-                    return (
-                      <div key={task.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
-                        <div className="text-center flex-shrink-0 w-10">
-                          <p className="text-indigo-400 text-xs font-bold uppercase">{mon}</p>
-                          <p className="text-white font-black text-lg leading-none">{d.getDate()}</p>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-slate-200 text-sm font-medium truncate">{task.title}</p>
-                          <p className="text-slate-500 text-xs">{task.assigned?.full_name ?? 'Unassigned'}</p>
-                        </div>
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${PRIORITY_COLORS[task.priority] ?? PRIORITY_COLORS.medium}`}>{task.priority}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            }
-          </div>
-        </div>
       </div>
     </div>
   )
