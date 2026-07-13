@@ -4,7 +4,7 @@ import {
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
   ChevronRight, ChevronLeft, Brain, Activity, MessageSquare, Upload, X,
   TrendingUp, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail,
-  FileImage, Paperclip, Camera
+  FileImage, Paperclip, Camera, Repeat
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
@@ -15,6 +15,7 @@ import { useSubscription } from '../../hooks/useSubscription'
 import { useAIAdvisor } from '../../hooks/useAIAdvisor'
 import { useAppointments } from '../../hooks/useAppointments'
 import { useDocuments } from '../../hooks/useDocuments'
+import { useRecurringTasks } from '../../hooks/useRecurringTasks'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
 import { buildExpensesCsv } from '../../lib/csv'
@@ -64,6 +65,8 @@ const PRIORITY_COLORS = {
   medium: 'text-amber-400 bg-amber-500/10',
   low:    'text-emerald-400 bg-emerald-500/10',
 }
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const SEVERITY_STYLES = {
   high:   { border: 'border-rose-500/30 bg-rose-500/5',       tag: 'bg-rose-500/20 text-rose-400'     },
@@ -118,7 +121,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
       case 'feed':
         return <FeedView circleId={circle?.id} />
       case 'tasks':
-        return <TasksView tasks={tasks} loading={tasksLoading} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} members={members} />
+        return <TasksView circleId={circle?.id} tasks={tasks} loading={tasksLoading} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} members={members} />
       case 'expenses':
         return <ExpensesView circleId={circle?.id} members={members} can={can} />
       case 'calendar':
@@ -422,8 +425,9 @@ function LogEntryModal({ onClose, onSave }) {
 
 // ── TasksView ─────────────────────────────────────────────────────────────────
 
-function TasksView({ tasks, loading, addTask, toggleTask, deleteTask, members }) {
+function TasksView({ circleId, tasks, loading, addTask, toggleTask, deleteTask, members }) {
   const { user }    = useAuth()
+  const { templates, addRecurringTask, stopRecurringTask } = useRecurringTasks(circleId)
   const [showModal, setShowModal] = useState(false)
   const pending   = tasks.filter(t => !t.completed_at)
   const completed = tasks.filter(t => t.completed_at)
@@ -456,7 +460,10 @@ function TasksView({ tasks, loading, addTask, toggleTask, deleteTask, members })
           <div key={task.id} className="glass rounded-2xl p-4 flex items-start gap-4 card-hover group">
             <button onClick={() => toggleTask(task.id)} className="w-5 h-5 rounded-full border-2 border-slate-600 hover:border-emerald-500 flex items-center justify-center flex-shrink-0 mt-1 transition-all" />
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium">{task.title}</p>
+              <p className="text-white font-medium flex items-center gap-2">
+                {task.title}
+                {task.recurring_task_id && <Repeat className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" aria-label="Recurring task" />}
+              </p>
               <div className="flex items-center gap-3 mt-2">
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${PRIORITY_COLORS[task.priority] ?? PRIORITY_COLORS.medium}`}>{task.priority} priority</span>
                 {task.due_date && <span className="text-slate-500 text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {fmtDate(task.due_date)}</span>}
@@ -475,7 +482,7 @@ function TasksView({ tasks, loading, addTask, toggleTask, deleteTask, members })
       {completed.length > 0 && (
         <>
           <h3 className="text-slate-600 text-xs uppercase tracking-widest font-medium mb-3">Completed</h3>
-          <div className="space-y-2 opacity-60">
+          <div className="space-y-2 opacity-60 mb-8">
             {completed.slice(0, 10).map((task) => (
               <button key={task.id} onClick={() => toggleTask(task.id)} className="w-full glass rounded-2xl p-4 flex items-start gap-4 text-left">
                 <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5 fill-emerald-500" />
@@ -486,22 +493,68 @@ function TasksView({ tasks, loading, addTask, toggleTask, deleteTask, members })
         </>
       )}
 
-      {showModal && <AddTaskModal members={members} onClose={() => setShowModal(false)} onSave={async (d) => { await addTask(d); setShowModal(false) }} />}
+      {templates.length > 0 && (
+        <>
+          <h3 className="text-slate-600 text-xs uppercase tracking-widest font-medium mb-3 flex items-center gap-1.5">
+            <Repeat className="w-3.5 h-3.5" /> Recurring
+          </h3>
+          <div className="space-y-2">
+            {templates.map((tpl) => (
+              <div key={tpl.id} className="glass rounded-2xl p-4 flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm">{tpl.title}</p>
+                  <p className="text-slate-500 text-xs mt-1 capitalize">
+                    {tpl.frequency}{tpl.frequency === 'weekly' && tpl.days_of_week?.length ? ` · ${tpl.days_of_week.map(d => WEEKDAY_LABELS[d]).join(', ')}` : ''}
+                    {' · '}{tpl.assigned?.full_name ?? 'Unassigned'}
+                  </p>
+                </div>
+                <button onClick={() => stopRecurringTask(tpl.id)} className="text-slate-600 hover:text-rose-400 text-xs font-medium transition-colors flex-shrink-0">Stop</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {showModal && (
+        <AddTaskModal
+          members={members}
+          onClose={() => setShowModal(false)}
+          onSave={async (d) => { await addTask(d); setShowModal(false) }}
+          onSaveRecurring={async (d) => { await addRecurringTask(d); setShowModal(false) }}
+        />
+      )}
     </div>
   )
 }
 
-function AddTaskModal({ members, onClose, onSave }) {
+function AddTaskModal({ members, onClose, onSave, onSaveRecurring }) {
   const [title, setTitle]       = useState('')
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate]   = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [repeat, setRepeat]     = useState('none') // 'none' | 'daily' | 'weekly'
+  const [daysOfWeek, setDaysOfWeek] = useState([])
   const [saving, setSaving]     = useState(false)
+
+  function toggleDay(day) {
+    setDaysOfWeek(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort())
+  }
 
   async function handleSave() {
     if (!title.trim()) return
+    if (repeat === 'weekly' && daysOfWeek.length === 0) return
     setSaving(true)
-    await onSave({ title: title.trim(), priority, due_date: dueDate || null, assigned_to: assignedTo || null })
+    if (repeat === 'none') {
+      await onSave({ title: title.trim(), priority, due_date: dueDate || null, assigned_to: assignedTo || null })
+    } else {
+      await onSaveRecurring({
+        title: title.trim(),
+        priority,
+        assigned_to: assignedTo || null,
+        frequency: repeat,
+        days_of_week: repeat === 'weekly' ? daysOfWeek : null,
+      })
+    }
     setSaving(false)
   }
 
@@ -534,9 +587,41 @@ function AddTaskModal({ members, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Due Date</label>
-            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Repeat</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'none', label: 'One-time' },
+                { value: 'daily', label: 'Daily' },
+                { value: 'weekly', label: 'Weekly' },
+              ].map(opt => (
+                <button key={opt.value} onClick={() => setRepeat(opt.value)}
+                  className={`py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                    repeat === opt.value ? 'border-indigo-500/60 bg-indigo-500/20 text-indigo-300' : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10'
+                  }`}
+                >
+                  {opt.value !== 'none' && <Repeat className="w-3 h-3" />} {opt.label}
+                </button>
+              ))}
+            </div>
+            {repeat === 'weekly' && (
+              <div className="grid grid-cols-7 gap-1.5 mt-3">
+                {WEEKDAY_LABELS.map((label, i) => (
+                  <button key={i} onClick={() => toggleDay(i)}
+                    className={`py-2 rounded-lg text-xs font-bold border transition-all ${
+                      daysOfWeek.includes(i) ? 'border-indigo-500/60 bg-indigo-500/20 text-indigo-300' : 'border-white/5 bg-white/5 text-slate-500 hover:bg-white/10'
+                    }`}
+                  >{label[0]}</button>
+                ))}
+              </div>
+            )}
           </div>
+
+          {repeat === 'none' && (
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Due Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+            </div>
+          )}
 
           {members.length > 0 && (
             <div>
@@ -551,8 +636,12 @@ function AddTaskModal({ members, onClose, onSave }) {
 
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 text-sm font-medium hover:bg-white/5 transition-all">Cancel</button>
-          <button onClick={handleSave} disabled={!title.trim() || saving} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2">
-            {saving ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</> : 'Create Task'}
+          <button
+            onClick={handleSave}
+            disabled={!title.trim() || saving || (repeat === 'weekly' && daysOfWeek.length === 0)}
+            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {saving ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</> : repeat === 'none' ? 'Create Task' : 'Create Recurring Task'}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, ChevronRight, Users, Brain, PartyPopper } from 'lucide-react'
+import { CheckCircle, ChevronRight, Users, Brain, PartyPopper, Repeat } from 'lucide-react'
 import { useAppointments } from '../../../hooks/useAppointments'
 import { useVitals } from '../../../hooks/useVitals'
 import { useCareFeed } from '../../../hooks/useCareFeed'
@@ -93,7 +93,10 @@ function TaskRow({ task, onToggle, onOpenDetail }) {
         onClick={() => onOpenDetail(task)}
         className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-lg"
       >
-        <p className={`font-semibold text-base leading-snug ${done ? 'text-slate-500 line-through' : 'text-white'}`}>{task.title}</p>
+        <p className={`font-semibold text-base leading-snug flex items-center gap-1.5 ${done ? 'text-slate-500 line-through' : 'text-white'}`}>
+          {task.title}
+          {task.recurring_task_id && <Repeat className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" aria-label="Recurring task" />}
+        </p>
         <div className="flex items-center gap-2 mt-1">
           <span className={`w-2 h-2 rounded-full ${PRIORITY_DOT[task.priority] ?? PRIORITY_DOT.medium}`} aria-hidden="true" />
           <span className="text-slate-400 text-sm">{task.assigned?.full_name ?? 'Unassigned'}</span>

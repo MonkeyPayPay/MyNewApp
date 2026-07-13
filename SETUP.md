@@ -30,6 +30,9 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 -- 8. Connective tissue: receipt photos on expenses, document links on
 --    appointments
 -- Copy and run: supabase/attachments.sql
+
+-- 9. Recurring tasks / medication schedules
+-- Copy and run: supabase/recurring_tasks.sql
 ```
 
 ## 2. Supabase Edge Functions
@@ -49,6 +52,7 @@ supabase functions deploy stripe-webhook
 supabase functions deploy summarize-document
 supabase functions deploy weekly-digest
 supabase functions deploy trial-reminders
+supabase functions deploy materialize-recurring-tasks
 ```
 
 ## 3. Supabase Secrets
@@ -106,6 +110,13 @@ header wherever those functions are invoked:
   Edge Functions → trial-reminders → Schedule, cron `0 14 * * *`) — emails
   anyone whose 14-day trial has 3 days left, deduped via `notification_log`
   so it only ever sends once per trial
+- **materialize-recurring-tasks** — the cron schedule's HTTP headers
+  (Dashboard → Edge Functions → materialize-recurring-tasks → Schedule,
+  cron `0 6 * * *`) — creates today's occurrence of every active
+  recurring task (e.g. a daily medication reminder). The app also
+  materializes today's occurrence immediately on creation client-side, so
+  a caregiver setting one up sees it right away instead of waiting for
+  tomorrow's cron run.
 
 **Invites need no webhook**: the app calls `send-invite` directly after
 creating an invitation. If you prefer a Database Webhook on `invitations`
