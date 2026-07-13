@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useSubscription } from './useSubscription'
+import { getDocumentSignedUrl, uploadDocumentFile } from '../lib/documentStorage'
 
 const QUOTA_BYTES = {
   family: 500 * 1024 * 1024,       // 500MB
@@ -52,26 +53,8 @@ export function useDocuments(circleId) {
     }
     setUploading(true)
     try {
-      const docId    = crypto.randomUUID()
-      const filePath = `${circleId}/${docId}/${file.name}`
-
-      const { error: upErr } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, { contentType: file.type, upsert: false })
-      if (upErr) throw upErr
-
-      const { data: inserted, error: dbErr } = await supabase.from('documents').insert({
-        circle_id:   circleId,
-        uploaded_by: user.id,
-        name:        file.name,
-        file_path:   filePath,
-        file_size:   file.size,
-        mime_type:   file.type,
-      }).select('id').single()
-      if (dbErr) {
-        await supabase.storage.from('documents').remove([filePath])
-        throw dbErr
-      }
+      const { document: inserted, error } = await uploadDocumentFile({ file, circleId, userId: user.id })
+      if (error) throw error
 
       await fetchDocs()
 
@@ -82,7 +65,7 @@ export function useDocuments(circleId) {
           .catch(() => {})
       }
 
-      return { error: null }
+      return { document: inserted, error: null }
     } catch (err) {
       return { error: err }
     } finally {
@@ -97,12 +80,5 @@ export function useDocuments(circleId) {
     return { error }
   }
 
-  async function getSignedUrl(filePath) {
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(filePath, 3600)
-    return { url: data?.signedUrl ?? null, error }
-  }
-
-  return { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl, usedBytes, quotaBytes }
+  return { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl: getDocumentSignedUrl, usedBytes, quotaBytes }
 }

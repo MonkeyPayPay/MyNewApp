@@ -20,7 +20,7 @@ export function useAppointments(circleId) {
   async function fetch() {
     const { data, error } = await supabase
       .from('appointments')
-      .select('*, profiles:created_by(full_name)')
+      .select('*, profiles:created_by(full_name), document:document_id(id, name, file_path, mime_type)')
       .eq('circle_id', circleId)
       .order('starts_at', { ascending: true })
     if (!error) setAppointments(data ?? [])

@@ -3,7 +3,8 @@ import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
   Bell, LogOut, Plus, CheckCircle, Clock, AlertCircle,
   ChevronRight, ChevronLeft, Brain, Activity, MessageSquare, Upload, X,
-  TrendingUp, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail
+  TrendingUp, Zap, CreditCard, Trash2, Loader, UserPlus, Download, Mail,
+  FileImage, Paperclip, Camera
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
@@ -17,6 +18,7 @@ import { useDocuments } from '../../hooks/useDocuments'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
 import { buildExpensesCsv } from '../../lib/csv'
+import { getDocumentSignedUrl, uploadDocumentFile } from '../../lib/documentStorage'
 import CareTimeline from './care/CareTimeline'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -118,9 +120,9 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
       case 'tasks':
         return <TasksView tasks={tasks} loading={tasksLoading} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} members={members} />
       case 'expenses':
-        return <ExpensesView circleId={circle?.id} members={members} />
+        return <ExpensesView circleId={circle?.id} members={members} can={can} />
       case 'calendar':
-        return <CalendarView circleId={circle?.id} />
+        return <CalendarView circleId={circle?.id} can={can} />
       case 'documents':
         return <DocumentsView circleId={circle?.id} />
       case 'ai':
@@ -560,10 +562,15 @@ function AddTaskModal({ members, onClose, onSave }) {
 
 // ── ExpensesView ──────────────────────────────────────────────────────────────
 
-function ExpensesView({ circleId, members }) {
+function ExpensesView({ circleId, members, can }) {
   const { user }  = useAuth()
   const { expenses, loading, addExpense, deleteExpense } = useExpenses(circleId)
   const [showModal, setShowModal] = useState(false)
+
+  async function viewReceipt(doc) {
+    const { url } = await getDocumentSignedUrl(doc.file_path)
+    if (url) window.open(url, '_blank', 'noopener')
+  }
 
   const thisMonth   = new Date().toISOString().slice(0, 7)
   const monthExp    = expenses.filter(e => e.expense_date?.startsWith(thisMonth))
@@ -640,6 +647,15 @@ function ExpensesView({ circleId, members }) {
                 <p className="text-white font-medium text-sm">{expense.label}</p>
                 <p className="text-slate-500 text-xs">{expense.payer?.full_name ?? 'You'} · {fmtDate(expense.expense_date)}</p>
               </div>
+              {expense.receipt && (
+                <button
+                  onClick={() => viewReceipt(expense.receipt)}
+                  aria-label="View receipt"
+                  className="text-slate-500 hover:text-indigo-400 transition-colors flex-shrink-0"
+                >
+                  <FileImage className="w-4 h-4" />
+                </button>
+              )}
               <div className="text-right flex-shrink-0">
                 <p className="text-white font-bold">${(expense.amount_cents / 100).toFixed(2)}</p>
                 {members.length > 1 && <p className="text-slate-600 text-xs">÷{members.length} = ${(expense.amount_cents / 100 / members.length).toFixed(2)}</p>}
@@ -654,22 +670,47 @@ function ExpensesView({ circleId, members }) {
         })}
       </div>
 
-      {showModal && <AddExpenseModal onClose={() => setShowModal(false)} onSave={async (d) => { await addExpense(d); setShowModal(false) }} />}
+      {showModal && (
+        <AddExpenseModal
+          circleId={circleId}
+          can={can}
+          onClose={() => setShowModal(false)}
+          onSave={async (d) => { await addExpense(d); setShowModal(false) }}
+        />
+      )}
     </div>
   )
 }
 
-function AddExpenseModal({ onClose, onSave }) {
+function AddExpenseModal({ circleId, can, onClose, onSave }) {
+  const { user } = useAuth()
   const [label, setLabel]     = useState('')
   const [amount, setAmount]   = useState('')
   const [category, setCategory] = useState('other')
   const [date, setDate]       = useState(new Date().toISOString().split('T')[0])
+  const [receiptFile, setReceiptFile] = useState(null)
   const [saving, setSaving]   = useState(false)
+  const [receiptError, setReceiptError] = useState(null)
+
+  const canAttachReceipt = !can || can('documents')
 
   async function handleSave() {
     if (!label.trim() || !amount) return
     setSaving(true)
-    await onSave({ label: label.trim(), amount, category, expense_date: date })
+    setReceiptError(null)
+
+    let receipt_document_id = null
+    if (receiptFile) {
+      const { document, error } = await uploadDocumentFile({ file: receiptFile, circleId, userId: user.id })
+      if (error) {
+        setReceiptError(`Couldn't attach receipt: ${error.message}`)
+        setSaving(false)
+        return
+      }
+      receipt_document_id = document?.id ?? null
+    }
+
+    await onSave({ label: label.trim(), amount, category, expense_date: date, receipt_document_id })
     setSaving(false)
   }
 
@@ -706,6 +747,32 @@ function AddExpenseModal({ onClose, onSave }) {
               ))}
             </div>
           </div>
+
+          {canAttachReceipt && (
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Receipt (optional)</label>
+              {receiptFile ? (
+                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                  <FileImage className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                  <span className="text-slate-300 text-sm flex-1 truncate">{receiptFile.name}</span>
+                  <button onClick={() => setReceiptFile(null)} className="text-slate-500 hover:text-rose-400 transition-colors flex-shrink-0"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/15 rounded-xl px-4 py-3 text-sm text-slate-400 cursor-pointer transition-colors">
+                  <Camera className="w-4 h-4" /> Attach a photo of the receipt
+                  <input
+                    type="file" className="hidden"
+                    accept="image/*,.pdf" capture="environment"
+                    onChange={e => setReceiptFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              )}
+            </div>
+          )}
+
+          {receiptError && (
+            <p className="text-rose-400 text-xs bg-rose-500/10 rounded-lg px-3 py-2">{receiptError}</p>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -856,9 +923,14 @@ function DocumentsView({ circleId }) {
 
 // ── CalendarView ──────────────────────────────────────────────────────────────
 
-function CalendarView({ circleId }) {
+function CalendarView({ circleId, can }) {
   const { user }  = useAuth()
   const { appointments, loading, addAppointment, deleteAppointment } = useAppointments(circleId)
+
+  async function viewDocument(doc) {
+    const { url } = await getDocumentSignedUrl(doc.file_path)
+    if (url) window.open(url, '_blank', 'noopener')
+  }
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date(); d.setDate(1); return d
   })
@@ -982,6 +1054,14 @@ function CalendarView({ circleId }) {
                       </p>
                       {appt.location && <p className="text-slate-500 text-xs mt-1.5">📍 {appt.location}</p>}
                       {appt.notes && <p className="text-slate-500 text-xs mt-2 leading-relaxed">{appt.notes}</p>}
+                      {appt.document && (
+                        <button
+                          onClick={() => viewDocument(appt.document)}
+                          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-xs mt-2 transition-colors"
+                        >
+                          <Paperclip className="w-3 h-3" /> {appt.document.name}
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1032,6 +1112,8 @@ function CalendarView({ circleId }) {
       {showModal && (
         <AddAppointmentModal
           defaultDateKey={selectedKey}
+          circleId={circleId}
+          can={can}
           onClose={() => setShowModal(false)}
           onSave={async (d) => { await addAppointment(d); setShowModal(false) }}
         />
@@ -1040,14 +1122,18 @@ function CalendarView({ circleId }) {
   )
 }
 
-function AddAppointmentModal({ defaultDateKey, onClose, onSave }) {
+function AddAppointmentModal({ defaultDateKey, circleId, can, onClose, onSave }) {
   const defaultStart = defaultDateKey ? `${defaultDateKey}T09:00` : new Date().toISOString().slice(0, 16)
   const [title,    setTitle]    = useState('')
   const [startsAt, setStartsAt] = useState(defaultStart)
   const [endsAt,   setEndsAt]   = useState('')
   const [location, setLocation] = useState('')
   const [notes,    setNotes]    = useState('')
+  const [documentId, setDocumentId] = useState('')
   const [saving,   setSaving]   = useState(false)
+
+  const canLinkDocument = !can || can('documents')
+  const { documents } = useDocuments(canLinkDocument ? circleId : null)
 
   async function handleSave() {
     if (!title.trim() || !startsAt) return
@@ -1056,6 +1142,7 @@ function AddAppointmentModal({ defaultDateKey, onClose, onSave }) {
       title:    title.trim(),
       starts_at: new Date(startsAt).toISOString(),
       ends_at:  endsAt ? new Date(endsAt).toISOString() : null,
+      document_id: documentId || null,
       location: location.trim() || null,
       notes:    notes.trim() || null,
     })
@@ -1096,6 +1183,25 @@ function AddAppointmentModal({ defaultDateKey, onClose, onSave }) {
             <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Notes</label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Preparation notes, what to bring, etc." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-indigo-500/50 transition-all" />
           </div>
+
+          {canLinkDocument && documents.length > 0 && (
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Attach a document (optional)</label>
+              <div className="relative">
+                <Paperclip className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <select
+                  value={documentId}
+                  onChange={e => setDocumentId(e.target.value)}
+                  className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all"
+                >
+                  <option value="" className="bg-[#1a1a2e]">None</option>
+                  {documents.map(doc => (
+                    <option key={doc.id} value={doc.id} className="bg-[#1a1a2e]">{doc.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">

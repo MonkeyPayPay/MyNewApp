@@ -26,7 +26,7 @@ export function useExpenses(circleId) {
     setLoading(true)
     const { data } = await supabase
       .from('expenses')
-      .select('*, payer:paid_by(full_name, avatar_url)')
+      .select('*, payer:paid_by(full_name, avatar_url), receipt:receipt_document_id(id, name, file_path, mime_type)')
       .eq('circle_id', circleId)
       .order('expense_date', { ascending: false })
       .limit(100)
@@ -35,7 +35,7 @@ export function useExpenses(circleId) {
     setLoading(false)
   }
 
-  async function addExpense({ label, amount, category, expense_date }) {
+  async function addExpense({ label, amount, category, expense_date, receipt_document_id }) {
     const amount_cents = Math.round(parseFloat(amount) * 100)
     const { data, error } = await supabase
       .from('expenses')
@@ -46,8 +46,9 @@ export function useExpenses(circleId) {
         amount_cents,
         category,
         expense_date: expense_date || new Date().toISOString().split('T')[0],
+        receipt_document_id: receipt_document_id ?? null,
       })
-      .select('*, payer:paid_by(full_name, avatar_url)')
+      .select('*, payer:paid_by(full_name, avatar_url), receipt:receipt_document_id(id, name, file_path, mime_type)')
       .single()
 
     if (!error && data) setExpenses(prev => [data, ...prev])

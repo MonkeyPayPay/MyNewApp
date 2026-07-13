@@ -26,6 +26,10 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 -- 7. Care role (caregiver / helper / recipient) — powers the narrower
 --    recipient-mode dashboard
 -- Copy and run: supabase/care_role.sql
+
+-- 8. Connective tissue: receipt photos on expenses, document links on
+--    appointments
+-- Copy and run: supabase/attachments.sql
 ```
 
 ## 2. Supabase Edge Functions
