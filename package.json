@@ -12,7 +12,8 @@
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
     "sync": "npx cap sync",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",
+    "@playwright/test": "^1.61.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",

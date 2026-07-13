@@ -173,3 +173,18 @@ Upload your APNs key to Supabase:
 
 ### Android
 Add `google-services.json` from Firebase Console to `android/app/`.
+
+## 8. Testing
+
+```bash
+npm test        # Unit tests (vitest) — src/lib/*.test.js
+npm run test:e2e  # Playwright smoke tests — tests/*.spec.js
+```
+
+The Playwright suite currently covers the public landing/auth surface
+only (page loads, no JS errors, "Start Free" reaches the sign-in screen,
+legal pages resolve). It does **not** cover the authenticated core loop
+(signup → circle creation → task complete) — auth is magic-link only, so
+driving it in CI needs either a test-only password auth path or a
+session minted server-side with the service-role key and injected before
+navigating. See the comment at the top of `tests/smoke.spec.js`.

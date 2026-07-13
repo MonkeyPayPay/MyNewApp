@@ -166,9 +166,18 @@ enforced via RLS + Edge Function checks) that finally gives the Pro tier
 a real, defensible differentiator — tasks and the calendar only, no
 expenses, documents, or AI insights.
 
-Still open: splitting `Dashboard.jsx` before it gets more expensive to
-touch, and a Playwright smoke test over the core signup → circle → task
-loop.
+Also landed: `Dashboard.jsx` split from one 1538-line file into a 247-line
+shell plus one file per view (`components/dashboard/views/`), and a
+Playwright smoke suite (`npm run test:e2e`) covering the public landing/
+auth surface. **Not yet covered**: the authenticated core loop (signup →
+circle → task complete) — magic-link-only auth means driving it in CI
+needs a test-only password path or a service-role-minted session; see
+the comment at the top of `tests/smoke.spec.js`.
+
+Every item from the original whole-product review has now been acted on
+— either built, or explicitly cut with a documented reason. The honest
+next step is the same one this document opened with: run the $500/30-day
+validation plan in §6 before building anything else new.
 
 ### Accessibility-focused dashboard redesign
 The home dashboard was rebuilt around a senior-friendly interaction model:

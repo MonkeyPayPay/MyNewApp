@@ -53,4 +53,9 @@ export default defineConfig({
   ],
   // Capacitor requires relative asset paths (file:// serving)
   base: './',
+  test: {
+    // Unit tests only — Playwright owns tests/**, which uses its own
+    // test()/expect() and would otherwise collide with vitest's globs.
+    include: ['src/**/*.test.{js,jsx}'],
+  },
 })
