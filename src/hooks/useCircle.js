@@ -8,6 +8,7 @@ export function useCircle() {
   const [circle, setCircle] = useState(null)
   const [recipient, setRecipient] = useState(null)
   const [members, setMembers] = useState([])
+  const [myRole, setMyRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function useCircle() {
       const c = memberRow.care_circles
       setCircle(c)
       setRecipient(c.care_recipients)
+      setMyRole(memberRow.role)
 
       // Fetch all members
       const { data: memberList } = await supabase
@@ -78,11 +80,11 @@ export function useCircle() {
     return { circle: circ }
   }
 
-  async function inviteMember(email) {
+  async function inviteMember(email, role = 'member') {
     if (!circle) return { error: new Error('No circle') }
     const { data, error } = await supabase
       .from('invitations')
-      .insert({ circle_id: circle.id, invited_by: user.id, email })
+      .insert({ circle_id: circle.id, invited_by: user.id, email, role })
       .select()
       .single()
 
@@ -97,5 +99,5 @@ export function useCircle() {
     return { data, error }
   }
 
-  return { circle, recipient, members, loading, createCircle, inviteMember, refetch: fetchCircle }
+  return { circle, recipient, members, myRole, loading, createCircle, inviteMember, refetch: fetchCircle }
 }

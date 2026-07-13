@@ -33,6 +33,9 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 
 -- 9. Recurring tasks / medication schedules
 -- Copy and run: supabase/recurring_tasks.sql
+
+-- 10. Scoped professional-caregiver role (Pro tier)
+-- Copy and run: supabase/professional_role.sql
 ```
 
 ## 2. Supabase Edge Functions

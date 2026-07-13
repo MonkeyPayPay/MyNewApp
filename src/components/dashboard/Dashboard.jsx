@@ -87,12 +87,21 @@ const navItems = [
 
 const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_advisor' }
 
+// Hidden entirely (not just paywalled) for the scoped professional-caregiver
+// circle role — enforced again server-side via RLS, this just keeps the UI
+// from showing a tab that would only error out.
+const RESTRICTED_ROLE_NAV = ['expenses', 'documents', 'ai']
+const RESTRICTED_ROLE_FEATURES = ['expenses', 'documents', 'ai_advisor']
+
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
 export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const { user } = useAuth()
-  const { circle, recipient, members, loading: circleLoading, inviteMember } = useCircle()
-  const { tier, isTrialing, trialDaysLeft, can, openPortal } = useSubscription()
+  const { circle, recipient, members, myRole, loading: circleLoading, inviteMember } = useCircle()
+  const { tier, isTrialing, trialDaysLeft, can: canByTier, openPortal } = useSubscription()
+  // Role-aware on top of tier-aware: the professional-caregiver circle
+  // role never sees these features, regardless of the circle's plan.
+  const can = (feature) => (myRole === 'caregiver' && RESTRICTED_ROLE_FEATURES.includes(feature)) ? false : canByTier(feature)
   const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask } = useTasks(circle?.id)
 
   const [activeNav, setActiveNav]       = useState('home')
@@ -108,7 +117,12 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
 
   const pendingCount = tasks.filter(t => !t.completed_at).length
 
+  const visibleNavItems = myRole === 'caregiver'
+    ? navItems.filter(item => !RESTRICTED_ROLE_NAV.includes(item.id))
+    : navItems
+
   function navigateTo(id) {
+    if (myRole === 'caregiver' && RESTRICTED_ROLE_NAV.includes(id)) return
     const feature = NAV_GATES[id]
     if (feature && !can(feature)) { setUpgradeModal(feature); return }
     setActiveNav(id)
@@ -140,7 +154,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
   return (
     <div className="flex h-screen bg-[#0a0a1a] overflow-hidden">
       {upgradeModal && <UpgradeModal feature={upgradeModal} onClose={() => setUpgradeModal(null)} />}
-      {showInviteModal && <InviteModal onClose={() => setShowInviteModal(false)} onSend={inviteMember} />}
+      {showInviteModal && <InviteModal can={can} onClose={() => setShowInviteModal(false)} onSend={inviteMember} />}
 
       {/* Sidebar */}
       <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-[#050510] border-r border-white/5 flex flex-col`}>
@@ -185,7 +199,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
         )}
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isLocked = NAV_GATES[item.id] && !can(NAV_GATES[item.id])
             return (
               <button
@@ -1421,17 +1435,20 @@ function AIAdvisorView({ can, onUpgrade }) {
 
 // ── InviteModal ───────────────────────────────────────────────────────────────
 
-function InviteModal({ onClose, onSend }) {
+function InviteModal({ can, onClose, onSend }) {
   const [email, setEmail]     = useState('')
+  const [role, setRole]       = useState('member')
   const [sending, setSending] = useState(false)
   const [sent, setSent]       = useState(false)
   const [error, setError]     = useState(null)
+
+  const canInviteProfessional = !can || can('professional_carer')
 
   async function handleSend() {
     if (!email.trim() || !email.includes('@')) return
     setSending(true)
     setError(null)
-    const { error: err } = await onSend(email.trim())
+    const { error: err } = await onSend(email.trim(), role)
     setSending(false)
     if (err) { setError(err.message ?? 'Failed to send invite'); return }
     setSent(true)
@@ -1475,6 +1492,31 @@ function InviteModal({ onClose, onSend }) {
                 className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-colors"
               />
             </div>
+
+            {canInviteProfessional && (
+              <>
+                <label className="block text-slate-400 text-xs font-medium mb-2 uppercase tracking-widest">Invite as</label>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <button
+                    onClick={() => setRole('member')}
+                    className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${role === 'member' ? 'border-indigo-500/60 bg-indigo-500/20 text-indigo-300' : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                  >
+                    Family member
+                  </button>
+                  <button
+                    onClick={() => setRole('caregiver')}
+                    className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${role === 'caregiver' ? 'border-indigo-500/60 bg-indigo-500/20 text-indigo-300' : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                  >
+                    Professional caregiver
+                  </button>
+                </div>
+                {role === 'caregiver' && (
+                  <p className="text-slate-500 text-xs mb-4 bg-white/5 rounded-lg px-3 py-2">
+                    They'll see tasks and the calendar only — no expenses, documents, or AI insights.
+                  </p>
+                )}
+              </>
+            )}
 
             {error && <p className="text-rose-400 text-xs mb-4 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
 

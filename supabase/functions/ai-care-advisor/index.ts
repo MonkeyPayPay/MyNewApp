@@ -41,15 +41,16 @@ Deno.serve(async (req) => {
     const { circleId } = await req.json()
     if (!circleId) return json({ error: 'circleId required' }, 400)
 
-    // Verify the user is a member of this circle
+    // Verify the user is a full-access member of this circle — the
+    // scoped professional-caregiver role never sees AI insights
     const { data: memberRow } = await supabase
       .from('circle_members')
-      .select('circle_id')
+      .select('circle_id, role')
       .eq('circle_id', circleId)
       .eq('user_id', user.id)
       .single()
 
-    if (!memberRow) return json({ error: 'Forbidden' }, 403)
+    if (!memberRow || memberRow.role === 'caregiver') return json({ error: 'Forbidden' }, 403)
 
     // Check cache — return early if still fresh
     const { data: cached } = await supabase

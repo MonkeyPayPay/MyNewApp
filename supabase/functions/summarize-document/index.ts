@@ -40,15 +40,16 @@ Deno.serve(async (req) => {
 
   if (docErr || !doc) return new Response(JSON.stringify({ error: 'Document not found' }), { status: 404, headers: CORS })
 
-  // Verify the caller belongs to the circle that owns this document
+  // Verify the caller belongs to the circle that owns this document —
+  // the scoped professional-caregiver role never sees the document vault
   const { data: memberRow } = await supabase
     .from('circle_members')
-    .select('circle_id')
+    .select('circle_id, role')
     .eq('circle_id', doc.circle_id)
     .eq('user_id', user.id)
     .single()
 
-  if (!memberRow) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: CORS })
+  if (!memberRow || memberRow.role === 'caregiver') return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: CORS })
 
   // Skip if already summarized
   if (doc.ai_summary) return new Response(JSON.stringify({ summary: doc.ai_summary, cached: true }), { headers: CORS })

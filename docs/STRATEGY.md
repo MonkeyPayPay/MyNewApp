@@ -154,14 +154,20 @@ task-assigned and care-feed-entry events. **Unverified against real
 devices** — the token signing is correct per each platform's documented
 format, but needs a real APNs key / Firebase project to confirm delivery.
 
-Still open from that review: a "who are you" onboarding step + a narrower
-view for the care recipient themselves; surfacing AI insights inline in
-the Right Now card instead of only behind their own tab; photo attachment
-on expenses and document linking on appointments; recurring tasks /
-medication schedules (the data-model fix — no due-time or recurrence on
-tasks yet); a scoped professional-caregiver role to actually justify the
-Pro tier; splitting `Dashboard.jsx` before it gets more expensive to
-touch; and a Playwright smoke test over the core signup → circle → task
+Since then, also landed: a "who are you" onboarding step + a narrower
+RecipientDashboard for the person actually receiving care; AI Care
+Advisor insights surfaced inline in the Right Now card (gated so it never
+fires a paid AI call for anyone not entitled to it); photo receipts on
+expenses and document linking on appointments; recurring tasks /
+medication schedules (recurring_tasks template + nightly materialization
+cron — the data-model fix this category needed most); and a scoped
+professional-caregiver circle role (`circle_members.role = 'caregiver'`,
+enforced via RLS + Edge Function checks) that finally gives the Pro tier
+a real, defensible differentiator — tasks and the calendar only, no
+expenses, documents, or AI insights.
+
+Still open: splitting `Dashboard.jsx` before it gets more expensive to
+touch, and a Playwright smoke test over the core signup → circle → task
 loop.
 
 ### Accessibility-focused dashboard redesign
