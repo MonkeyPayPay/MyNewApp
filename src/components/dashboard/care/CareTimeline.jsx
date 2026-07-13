@@ -9,6 +9,7 @@ import DetailSlideOver from '../../ui/DetailSlideOver'
 import { FlyToProvider, useFlyTo } from './FlyToContext'
 import LiveStatusHeader from './LiveStatusHeader'
 import QuickVitalsLog from './QuickVitalsLog'
+import QuickCapture from './QuickCapture'
 
 const EASE = [0.22, 1, 0.36, 1] // calm, grounded deceleration
 const PRIORITY_DOT = { high: 'bg-rose-400', medium: 'bg-amber-400', low: 'bg-emerald-400' }
@@ -157,7 +158,7 @@ function TaskDetailPanel({ task, feedEntries }) {
   )
 }
 
-function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, can, onUpgrade, onNavigate }) {
+function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, addTask, can, onUpgrade, onNavigate }) {
   const { appointments } = useAppointments(circleId)
   const vitals = useVitals(circleId)
   const { entries: feedEntries } = useCareFeed(circleId)
@@ -291,6 +292,8 @@ function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, ca
       <DetailSlideOver open={!!detailTask} onClose={() => setDetailTask(null)} title={detailTask?.title ?? ''}>
         <TaskDetailPanel task={detailTask} feedEntries={feedEntries} />
       </DetailSlideOver>
+
+      <QuickCapture onAddTask={addTask} />
     </div>
   )
 }

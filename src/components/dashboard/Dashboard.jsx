@@ -112,7 +112,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const renderContent = () => {
     switch (activeNav) {
       case 'home':
-        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
+        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} addTask={addTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
       case 'feed':
         return <FeedView circleId={circle?.id} />
       case 'tasks':
@@ -128,7 +128,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
       case 'settings':
         return <NotificationSettings />
       default:
-        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
+        return <CareTimeline circleId={circle?.id} recipient={recipient} members={members} tasks={tasks} toggleTask={toggleTask} addTask={addTask} can={can} onUpgrade={setUpgradeModal} onNavigate={navigateTo} />
     }
   }
 
