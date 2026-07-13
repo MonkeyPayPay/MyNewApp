@@ -22,6 +22,10 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 
 -- 6. Push notification platform tracking (ios/android)
 -- Copy and run: supabase/push.sql
+
+-- 7. Care role (caregiver / helper / recipient) — powers the narrower
+--    recipient-mode dashboard
+-- Copy and run: supabase/care_role.sql
 ```
 
 ## 2. Supabase Edge Functions

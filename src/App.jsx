@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { useCircle } from './hooks/useCircle'
 import { useSubscription } from './hooks/useSubscription'
+import { useProfile } from './hooks/useProfile'
 import { supabase } from './lib/supabase'
 import { usePushNotifications } from './hooks/usePushNotifications'
 import { track } from './lib/analytics'
@@ -16,6 +17,7 @@ const Auth       = lazy(() => import('./pages/Auth'))
 const Onboarding = lazy(() => import('./pages/Onboarding'))
 const JoinCircle = lazy(() => import('./pages/JoinCircle'))
 const Dashboard  = lazy(() => import('./components/dashboard/Dashboard'))
+const RecipientDashboard = lazy(() => import('./components/dashboard/RecipientDashboard'))
 
 async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return
@@ -68,6 +70,7 @@ const CHECKOUT_INTENT_KEY = 'carecircle_checkout_intent'
 function AppRouter() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { circle, loading: circleLoading, refetch } = useCircle()
+  const { profile } = useProfile()
   const { startCheckout } = useSubscription()
   const [showAuth, setShowAuth]             = useState(false)
   const [onboardingDone, setOnboardingDone] = useState(false)
@@ -134,6 +137,10 @@ function AppRouter() {
 
   if (!circle && !onboardingDone) {
     return <Onboarding onComplete={() => setOnboardingDone(true)} />
+  }
+
+  if (profile?.care_role === 'recipient') {
+    return <RecipientDashboard onLogout={signOut} />
   }
 
   return (

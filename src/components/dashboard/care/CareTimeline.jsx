@@ -158,7 +158,7 @@ function TaskDetailPanel({ task, feedEntries }) {
   )
 }
 
-function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, addTask, can, onUpgrade, onNavigate }) {
+function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, addTask, can, onUpgrade, onNavigate, simplified }) {
   const { appointments } = useAppointments(circleId)
   const vitals = useVitals(circleId)
   const { entries: feedEntries } = useCareFeed(circleId)
@@ -270,30 +270,32 @@ function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, ad
           </section>
         )}
 
-        {/* Quiet secondary links — kept minimal on purpose */}
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={() => can('ai_advisor') ? onNavigate('ai') : onUpgrade('ai_advisor')}
-            className="flex-1 flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-2xl px-4 py-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          >
-            <Brain className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-            <span className="text-slate-300 text-sm font-medium">Care Advisor</span>
-          </button>
-          <button
-            onClick={() => onNavigate('feed')}
-            className="flex-1 flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-2xl px-4 py-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          >
-            <Users className="w-5 h-5 text-slate-400 flex-shrink-0" />
-            <span className="text-slate-300 text-sm font-medium">{members.length} in circle</span>
-          </button>
-        </div>
+        {/* Quiet secondary links — administrative, so hidden in simplified/recipient mode */}
+        {!simplified && (
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={() => can('ai_advisor') ? onNavigate('ai') : onUpgrade('ai_advisor')}
+              className="flex-1 flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-2xl px-4 py-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Brain className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+              <span className="text-slate-300 text-sm font-medium">Care Advisor</span>
+            </button>
+            <button
+              onClick={() => onNavigate('feed')}
+              className="flex-1 flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-2xl px-4 py-3.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Users className="w-5 h-5 text-slate-400 flex-shrink-0" />
+              <span className="text-slate-300 text-sm font-medium">{members.length} in circle</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <DetailSlideOver open={!!detailTask} onClose={() => setDetailTask(null)} title={detailTask?.title ?? ''}>
         <TaskDetailPanel task={detailTask} feedEntries={feedEntries} />
       </DetailSlideOver>
 
-      <QuickCapture onAddTask={addTask} />
+      {!simplified && <QuickCapture onAddTask={addTask} />}
     </div>
   )
 }

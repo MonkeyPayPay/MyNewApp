@@ -1,11 +1,32 @@
 import { useState } from 'react'
-import { Heart, User, Mail, ArrowRight, ArrowLeft, CheckCircle, Plus, X } from 'lucide-react'
+import { Heart, User, Mail, ArrowRight, ArrowLeft, CheckCircle, Plus, X, Users, HeartHandshake } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useCircle } from '../hooks/useCircle'
 import { supabase } from '../lib/supabase'
 import { track } from '../lib/analytics'
 
-const STEPS = ['Your name', 'Care recipient', 'Invite family', 'You\'re set']
+const STEPS = ['Who you are', 'Your name', 'Care recipient', 'Invite family', 'You\'re set']
+
+const ROLES = [
+  {
+    value: 'caregiver',
+    icon: <User className="w-5 h-5" />,
+    title: "I'm coordinating care for a family member",
+    body: 'You\'ll set up the circle, add tasks, and invite others to help.',
+  },
+  {
+    value: 'helper',
+    icon: <Users className="w-5 h-5" />,
+    title: "I'm helping a family member coordinate",
+    body: 'You\'ll pitch in on tasks alongside whoever\'s leading.',
+  },
+  {
+    value: 'recipient',
+    icon: <HeartHandshake className="w-5 h-5" />,
+    title: "I'm the person receiving care",
+    body: 'You\'ll get a simpler view — just today\'s meds and how you\'re feeling.',
+  },
+]
 
 export default function Onboarding({ onComplete }) {
   const { user } = useAuth()
@@ -15,24 +36,32 @@ export default function Onboarding({ onComplete }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const [careRole, setCareRole] = useState(null)
   const [name, setName] = useState(user?.user_metadata?.full_name || '')
   const [recipientName, setRecipientName] = useState('')
   const [recipientDob, setRecipientDob] = useState('')
   const [inviteEmails, setInviteEmails] = useState([''])
   const [circleId, setCircleId] = useState(null)
 
+  const isRecipient = careRole === 'recipient'
+
   const next = () => setStep(s => Math.min(s + 1, STEPS.length - 1))
   const back = () => setStep(s => Math.max(s - 1, 0))
+
+  function chooseRole(value) {
+    setCareRole(value)
+    next()
+  }
 
   async function handleCreateCircle() {
     setLoading(true)
     setError(null)
-    // Persist name to profile
+    // Persist name + role to profile
     if (name.trim()) {
-      await supabase.from('profiles').upsert({ id: user.id, full_name: name.trim() })
+      await supabase.from('profiles').upsert({ id: user.id, full_name: name.trim(), care_role: careRole })
     }
     const { circle, error } = await createCircle({
-      recipientName,
+      recipientName: isRecipient ? name.trim() : recipientName,
       recipientDob: recipientDob || null,
     })
     setLoading(false)
@@ -90,8 +119,33 @@ export default function Onboarding({ onComplete }) {
         </div>
 
         <div className="glass rounded-3xl p-8 border border-white/8">
-          {/* Step 0: Your name */}
+          {/* Step 0: Who you are */}
           {step === 0 && (
+            <div className="animate-fade-in">
+              <h2 className="text-white font-black text-2xl mb-2">Which best describes you?</h2>
+              <p className="text-slate-400 text-sm mb-7">This just helps us show you the right amount of detail.</p>
+              <div className="space-y-3">
+                {ROLES.map((role) => (
+                  <button
+                    key={role.value}
+                    onClick={() => chooseRole(role.value)}
+                    className="w-full flex items-start gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/40 rounded-xl p-4 text-left transition-all"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
+                      {role.icon}
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-sm">{role.title}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">{role.body}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 1: Your name */}
+          {step === 1 && (
             <div className="animate-fade-in">
               <h2 className="text-white font-black text-2xl mb-2">Welcome! What's your name?</h2>
               <p className="text-slate-400 text-sm mb-7">So your family knows who's doing what.</p>
@@ -103,30 +157,45 @@ export default function Onboarding({ onComplete }) {
                 placeholder="Jordan O'Brien"
                 className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors mb-6"
               />
-              <button
-                onClick={next}
-                disabled={!name.trim()}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
-              >
-                Continue <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex gap-3">
+                <button onClick={back} className="glass px-5 py-3.5 rounded-xl text-slate-400 hover:text-white transition-colors text-sm">
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={next}
+                  disabled={!name.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
+                >
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Step 1: Care recipient */}
-          {step === 1 && (
+          {/* Step 2: Care recipient (reframed to first-person if the user is the recipient) */}
+          {step === 2 && (
             <div className="animate-fade-in">
-              <h2 className="text-white font-black text-2xl mb-2">Who are you caring for?</h2>
-              <p className="text-slate-400 text-sm mb-7">Add your loved one's name to create your care circle.</p>
+              <h2 className="text-white font-black text-2xl mb-2">
+                {isRecipient ? 'A couple details about you' : 'Who are you caring for?'}
+              </h2>
+              <p className="text-slate-400 text-sm mb-7">
+                {isRecipient
+                  ? 'This helps your family circle keep track of your care.'
+                  : 'Add your loved one\'s name to create your care circle.'}
+              </p>
 
-              <label className="block text-slate-400 text-xs font-medium mb-2 uppercase tracking-widest">Full name</label>
-              <input
-                type="text"
-                value={recipientName}
-                onChange={e => setRecipientName(e.target.value)}
-                placeholder="e.g. Betty Johnson"
-                className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors mb-4"
-              />
+              {!isRecipient && (
+                <>
+                  <label className="block text-slate-400 text-xs font-medium mb-2 uppercase tracking-widest">Full name</label>
+                  <input
+                    type="text"
+                    value={recipientName}
+                    onChange={e => setRecipientName(e.target.value)}
+                    placeholder="e.g. Betty Johnson"
+                    className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors mb-4"
+                  />
+                </>
+              )}
 
               <label className="block text-slate-400 text-xs font-medium mb-2 uppercase tracking-widest">Date of birth (optional)</label>
               <input
@@ -146,7 +215,7 @@ export default function Onboarding({ onComplete }) {
                 </button>
                 <button
                   onClick={handleCreateCircle}
-                  disabled={!recipientName.trim() || loading}
+                  disabled={(!isRecipient && !recipientName.trim()) || loading}
                   className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
                 >
                   {loading ? 'Creating...' : <>Create Care Circle <ArrowRight className="w-4 h-4" /></>}
@@ -155,8 +224,8 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* Step 2: Invite family */}
-          {step === 2 && (
+          {/* Step 3: Invite family */}
+          {step === 3 && (
             <div className="animate-fade-in">
               <h2 className="text-white font-black text-2xl mb-2">Invite your family</h2>
               <p className="text-slate-400 text-sm mb-7">They'll get an email to join your care circle. You can add more later.</p>
@@ -212,8 +281,8 @@ export default function Onboarding({ onComplete }) {
             </div>
           )}
 
-          {/* Step 3: Done */}
-          {step === 3 && (
+          {/* Step 4: Done */}
+          {step === 4 && (
             <div className="text-center animate-fade-in py-4">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-indigo-500/30">
                 <Heart className="w-10 h-10 text-white fill-white animate-pulse-slow" />
