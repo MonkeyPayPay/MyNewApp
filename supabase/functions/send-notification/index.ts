@@ -5,6 +5,7 @@
  */
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { taskAssignedEmail, feedEntryEmail } from '../_shared/emails.ts'
+import { sendPushToUser } from '../_shared/push.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const FROM = 'CareCircle <hello@carecircle.app>'
@@ -49,22 +50,12 @@ Deno.serve(async (req) => {
       .single()
     if (already) return new Response('duplicate', { status: 200 })
 
-    // Fetch assignee prefs + email
-    const { data: prefs } = await supabase
-      .from('notification_preferences')
-      .select('email_task_assigned')
-      .eq('user_id', record.assigned_to)
-      .single()
-
-    if (!prefs?.email_task_assigned) return new Response('opted out', { status: 200 })
-
     const { data: assignee } = await supabase
       .from('profiles')
       .select('full_name')
       .eq('id', record.assigned_to)
       .single()
 
-    const { data: assigneeAuth } = await supabase.auth.admin.getUserById(record.assigned_to)
     const { data: assigner } = await supabase
       .from('profiles')
       .select('full_name')
@@ -78,20 +69,39 @@ Deno.serve(async (req) => {
       .eq('id', record.circle_id)
       .single()
 
-    const email = assigneeAuth?.user?.email
-    if (!email) return new Response('no email', { status: 200 })
+    const recipientName = (circle?.care_recipients as any)?.full_name ?? 'your loved one'
 
-    const { subject, html } = taskAssignedEmail({
-      assigneeName: assignee?.full_name ?? 'there',
-      assignerName: assigner?.full_name ?? 'A family member',
-      taskTitle: record.title,
-      priority: record.priority,
-      dueDate: record.due_date,
-      recipientName: (circle?.care_recipients as any)?.full_name ?? 'your loved one',
-      appUrl: APP_URL,
+    // Email — gated by the user's email preference
+    const { data: prefs } = await supabase
+      .from('notification_preferences')
+      .select('email_task_assigned')
+      .eq('user_id', record.assigned_to)
+      .single()
+
+    if (prefs?.email_task_assigned) {
+      const { data: assigneeAuth } = await supabase.auth.admin.getUserById(record.assigned_to)
+      const email = assigneeAuth?.user?.email
+      if (email) {
+        const { subject, html } = taskAssignedEmail({
+          assigneeName: assignee?.full_name ?? 'there',
+          assignerName: assigner?.full_name ?? 'A family member',
+          taskTitle: record.title,
+          priority: record.priority,
+          dueDate: record.due_date,
+          recipientName,
+          appUrl: APP_URL,
+        })
+        await sendEmail(email, subject, html)
+      }
+    }
+
+    // Push — a separate channel from the email preference above; fires
+    // whenever a device is registered, independent of email opt-out
+    await sendPushToUser(supabase, record.assigned_to, {
+      title: 'New task assigned',
+      body: `${assigner?.full_name ?? 'Someone'} assigned you: ${record.title}`,
+      data: { nav: 'tasks' },
     })
-
-    await sendEmail(email, subject, html)
 
     // Log to prevent duplicates
     await supabase.from('notification_log').insert({
@@ -141,21 +151,26 @@ Deno.serve(async (req) => {
         .eq('user_id', member.user_id)
         .single()
 
-      if (!prefs?.email_feed_entry) continue
+      if (prefs?.email_feed_entry) {
+        const { data: memberAuth } = await supabase.auth.admin.getUserById(member.user_id)
+        const email = memberAuth?.user?.email
+        if (email) {
+          const { subject, html } = feedEntryEmail({
+            recipientName: (circle?.care_recipients as any)?.full_name ?? 'your loved one',
+            authorName: author?.full_name ?? 'A family member',
+            category: record.category,
+            body: record.body,
+            appUrl: APP_URL,
+          })
+          await sendEmail(email, subject, html)
+        }
+      }
 
-      const { data: memberAuth } = await supabase.auth.admin.getUserById(member.user_id)
-      const email = memberAuth?.user?.email
-      if (!email) continue
-
-      const { subject, html } = feedEntryEmail({
-        recipientName: (circle?.care_recipients as any)?.full_name ?? 'your loved one',
-        authorName: author?.full_name ?? 'A family member',
-        category: record.category,
-        body: record.body,
-        appUrl: APP_URL,
+      await sendPushToUser(supabase, member.user_id, {
+        title: 'New care log update',
+        body: `${author?.full_name ?? 'Someone'}: ${record.body.slice(0, 80)}`,
+        data: { nav: 'feed' },
       })
-
-      await sendEmail(email, subject, html)
 
       await supabase.from('notification_log').insert({
         user_id: member.user_id,

@@ -28,8 +28,12 @@ export function usePushNotifications() {
         await PushNotifications.register()
 
         const tokenListener = await PushNotifications.addListener('registration', async ({ value: token }) => {
-          // Store token in profiles so Edge Functions can target this device
-          await supabase.from('profiles').update({ push_token: token }).eq('id', user.id)
+          // Store token + platform so Edge Functions know whether to send
+          // via APNs (iOS gives a raw device token) or FCM (Android)
+          await supabase.from('profiles').update({
+            push_token: token,
+            push_platform: Capacitor.getPlatform(),
+          }).eq('id', user.id)
         })
 
         const notifListener = await PushNotifications.addListener('pushNotificationReceived', (notification) => {

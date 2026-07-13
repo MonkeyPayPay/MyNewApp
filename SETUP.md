@@ -19,6 +19,9 @@ Run these in the **Supabase SQL Editor** (or via `supabase db push`):
 
 -- 5. Vitals / daily wellness log (mood, water, blood pressure, pain)
 -- Copy and run: supabase/vitals.sql
+
+-- 6. Push notification platform tracking (ios/android)
+-- Copy and run: supabase/push.sql
 ```
 
 ## 2. Supabase Edge Functions
@@ -33,6 +36,7 @@ supabase functions deploy create-checkout-session
 supabase functions deploy create-portal-session
 supabase functions deploy send-invite
 supabase functions deploy send-notification
+supabase functions deploy send-push
 supabase functions deploy stripe-webhook
 supabase functions deploy summarize-document
 supabase functions deploy weekly-digest
@@ -52,8 +56,35 @@ supabase secrets set \
   STRIPE_PRICE_PRO_MONTHLY=price_... \
   STRIPE_PRICE_PRO_ANNUAL=price_... \
   WEBHOOK_SECRET=$(openssl rand -hex 24) \
-  APP_URL=https://my-new-app-lyart.vercel.app
+  APP_URL=https://my-new-app-lyart.vercel.app \
+  APNS_KEY_P8="$(cat AuthKey_XXXXXXXXXX.p8)" \
+  APNS_KEY_ID=XXXXXXXXXX \
+  APNS_TEAM_ID=XXXXXXXXXX \
+  APNS_BUNDLE_ID=app.carecircle \
+  FCM_PROJECT_ID=your-firebase-project-id \
+  FCM_SERVICE_ACCOUNT_JSON="$(cat firebase-service-account.json | tr -d '\n')"
 ```
+
+### Push notification credentials — where these come from
+
+**iOS (APNs)**: Apple Developer → Certificates, IDs & Profiles → Keys →
+create an "Apple Push Notifications service (APNs)" key. Download the
+`.p8` file once (Apple only lets you download it once), note the Key ID
+and your Team ID (top-right of the Developer portal).
+
+**Android (FCM)**: Firebase Console → your project → Project Settings →
+Service Accounts → "Generate new private key". This downloads the JSON
+Capacitor's Android build also needs as `android/app/google-services.json`
+(same Firebase project, different file — the service account JSON goes
+into the Supabase secret above, `google-services.json` goes into the repo).
+
+Push sending is wired into `send-notification` (task-assigned, new care
+log entry) via `supabase/functions/_shared/push.ts`, which signs JWTs
+directly with Deno's Web Crypto API — no Firebase Admin SDK or APNs
+library needed. **This has not been tested against real devices** — the
+cryptography (ES256 for APNs, RS256 for the FCM OAuth2 exchange) is
+correct per each platform's documented token format, but verify with a
+real device before relying on it.
 
 `WEBHOOK_SECRET` protects `send-notification` and `weekly-digest` from
 unauthenticated calls. Add the same value as an `x-webhook-secret` HTTP

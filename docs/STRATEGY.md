@@ -138,13 +138,31 @@ spending anything on more features:
   (`src/lib/entitlements.js`) and CSV export escaping (`src/lib/csv.js`).
 
 ### Known remaining (accepted for now)
-- Push notification *sending* is not implemented (tokens are collected;
-  an Edge Function using FCM/APNs is future work — gated on validation).
 - RLS policies untested by automation; pgTAP harness is the eventual home.
-- Testimonials/stats on the landing page ("50,000+ families",
-  "4.9/5 App Store") are placeholder marketing copy — replace with real
-  numbers or remove before any paid traffic; false claims poison ad
-  accounts and trust.
+
+### Whole-product review (see the published artifact for full detail)
+A follow-up executive/design/engineering/customer review was done against
+the live product. Fixes already landed from it: removed the beta badge and
+fabricated testimonials/trust stats; removed the unenforced free-tier
+member cap (was fighting the product's own invite-driven growth loop);
+cut Pro-tier pricing claims for features that didn't exist; added real
+document-vault quota enforcement; added an ambient tier + trial-countdown
+chip; added a quick-capture button to the Right Now timeline; and built
+push notification *sending* (APNs direct + FCM HTTP v1, JWT-signed via
+Deno's Web Crypto — see `supabase/functions/_shared/push.ts`), wired into
+task-assigned and care-feed-entry events. **Unverified against real
+devices** — the token signing is correct per each platform's documented
+format, but needs a real APNs key / Firebase project to confirm delivery.
+
+Still open from that review: a "who are you" onboarding step + a narrower
+view for the care recipient themselves; surfacing AI insights inline in
+the Right Now card instead of only behind their own tab; photo attachment
+on expenses and document linking on appointments; recurring tasks /
+medication schedules (the data-model fix — no due-time or recurrence on
+tasks yet); a scoped professional-caregiver role to actually justify the
+Pro tier; splitting `Dashboard.jsx` before it gets more expensive to
+touch; and a Playwright smoke test over the core signup → circle → task
+loop.
 
 ### Accessibility-focused dashboard redesign
 The home dashboard was rebuilt around a senior-friendly interaction model:
