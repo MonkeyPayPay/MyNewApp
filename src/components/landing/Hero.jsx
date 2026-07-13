@@ -27,7 +27,7 @@ export default function Hero({ onGetStarted }) {
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-slow" />
-              <span className="text-indigo-300 text-sm font-medium">Now in public beta — free to start</span>
+              <span className="text-indigo-300 text-sm font-medium">Free to start — no credit card</span>
             </div>
 
             <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight mb-6">

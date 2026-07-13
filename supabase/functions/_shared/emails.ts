@@ -249,6 +249,36 @@ export function inviteEmail(opts: {
 }
 
 // ─────────────────────────────────────────
+// TRIAL ENDING EMAIL
+// ─────────────────────────────────────────
+
+export function trialEndingEmail(opts: {
+  userName: string
+  tier: string
+  daysLeft: number
+  price: string
+  appUrl: string
+}): { subject: string; html: string } {
+  const tierLabel = opts.tier.charAt(0).toUpperCase() + opts.tier.slice(1)
+  return {
+    subject: `Your CareCircle ${tierLabel} trial ends in ${opts.daysLeft} day${opts.daysLeft === 1 ? '' : 's'}`,
+    html: base(`
+      <p style="margin:0 0 20px;">${tag('Trial ending soon', BRAND.coral)}</p>
+      <h1 style="color:white;font-size:22px;font-weight:900;margin:0 0 10px;letter-spacing:-0.3px;">
+        Your ${tierLabel} trial wraps up in ${opts.daysLeft} day${opts.daysLeft === 1 ? '' : 's'}
+      </h1>
+      <p style="color:${BRAND.muted};font-size:15px;line-height:1.6;margin:0 0 24px;">
+        No action needed if you'd like to keep everything you've set up — the document
+        vault, expense splitting, and AI Care Advisor will continue automatically at
+        ${opts.price}/month. If you'd rather not continue, you can cancel any time before
+        the trial ends and you won't be charged.
+      </p>
+      ${btn('Manage Subscription', opts.appUrl)}
+    `, `Your CareCircle ${tierLabel} trial ends in ${opts.daysLeft} days`),
+  }
+}
+
+// ─────────────────────────────────────────
 // WEEKLY DIGEST EMAIL
 // ─────────────────────────────────────────
 export function weeklyDigestEmail(opts: {

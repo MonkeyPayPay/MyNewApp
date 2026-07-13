@@ -87,7 +87,7 @@ const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_adviso
 export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const { user } = useAuth()
   const { circle, recipient, members, loading: circleLoading, inviteMember } = useCircle()
-  const { tier, can, openPortal } = useSubscription()
+  const { tier, isTrialing, trialDaysLeft, can, openPortal } = useSubscription()
   const { tasks, loading: tasksLoading, addTask, toggleTask, deleteTask } = useTasks(circle?.id)
 
   const [activeNav, setActiveNav]       = useState('home')
@@ -206,6 +206,23 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
         </nav>
 
         <div className="p-3 pb-safe border-t border-white/5 space-y-1">
+          {sidebarOpen && (
+            <button
+              onClick={() => tier === 'free' ? setUpgradeModal('ai_advisor') : openPortal()}
+              className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold mb-1 transition-all ${
+                tier === 'pro'
+                  ? 'bg-orange-500/10 text-orange-300 hover:bg-orange-500/20'
+                  : tier === 'family'
+                    ? 'bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20'
+                    : 'bg-white/5 text-slate-400 hover:bg-white/10'
+              }`}
+            >
+              <span className="uppercase tracking-wide">{tier} plan</span>
+              {isTrialing && trialDaysLeft !== null && (
+                <span className="font-medium normal-case tracking-normal">{trialDaysLeft}d left in trial</span>
+              )}
+            </button>
+          )}
           {sidebarOpen && tier === 'free' && (
             <button
               onClick={() => setUpgradeModal('ai_advisor')}
@@ -708,7 +725,7 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 function DocumentsView({ circleId }) {
   const { user }  = useAuth()
-  const { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl } = useDocuments(circleId)
+  const { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl, usedBytes, quotaBytes } = useDocuments(circleId)
   const [dragOver, setDragOver] = useState(false)
   const [uploadError, setUploadError] = useState(null)
 
@@ -731,10 +748,11 @@ function DocumentsView({ circleId }) {
   }
 
   function fmtSize(bytes) {
-    if (!bytes) return '—'
+    if (!bytes) return '0 B'
     if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`
+    return `${(bytes / 1024 ** 3).toFixed(1)} GB`
   }
 
   function docIcon(mimeType, name) {
@@ -763,6 +781,16 @@ function DocumentsView({ circleId }) {
             disabled={uploading}
           />
         </label>
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${usedBytes / quotaBytes > 0.9 ? 'bg-rose-500' : 'bg-indigo-500'}`}
+            style={{ width: `${Math.min(100, (usedBytes / quotaBytes) * 100)}%` }}
+          />
+        </div>
+        <span className="text-slate-500 text-xs flex-shrink-0">{fmtSize(usedBytes)} of {fmtSize(quotaBytes)} used</span>
       </div>
 
       <div

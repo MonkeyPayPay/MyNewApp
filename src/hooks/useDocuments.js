@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useSubscription } from './useSubscription'
+
+const QUOTA_BYTES = {
+  family: 500 * 1024 * 1024,       // 500MB
+  pro:    5 * 1024 * 1024 * 1024,  // 5GB
+}
 
 export function useDocuments(circleId) {
   const { user }            = useAuth()
+  const { tier }            = useSubscription()
   const [documents, setDocuments] = useState([])
   const [loading, setLoading]     = useState(true)
   const [uploading, setUploading] = useState(false)
+
+  const usedBytes  = documents.reduce((sum, d) => sum + (d.file_size ?? 0), 0)
+  const quotaBytes = QUOTA_BYTES[tier] ?? QUOTA_BYTES.family
 
   useEffect(() => {
     if (!circleId) { setLoading(false); return }
@@ -36,6 +46,10 @@ export function useDocuments(circleId) {
 
   async function uploadDocument(file) {
     if (!file || !circleId || !user) return { error: new Error('Missing required fields') }
+    if (usedBytes + file.size > quotaBytes) {
+      const quotaLabel = quotaBytes >= 1024 ** 3 ? `${(quotaBytes / 1024 ** 3).toFixed(0)}GB` : `${(quotaBytes / 1024 ** 2).toFixed(0)}MB`
+      return { error: new Error(`This would exceed your ${quotaLabel} document vault limit. Delete an old document or upgrade for more space.`) }
+    }
     setUploading(true)
     try {
       const docId    = crypto.randomUUID()
@@ -90,5 +104,5 @@ export function useDocuments(circleId) {
     return { url: data?.signedUrl ?? null, error }
   }
 
-  return { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl }
+  return { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl, usedBytes, quotaBytes }
 }

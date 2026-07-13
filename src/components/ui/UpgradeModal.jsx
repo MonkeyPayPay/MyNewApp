@@ -19,11 +19,6 @@ const FEATURES = {
     description: 'AI-powered pattern detection that surfaces care insights you\'d otherwise miss.',
     icon: '🧠',
   },
-  unlimited_members: {
-    title: 'Unlimited Family Members',
-    description: 'Add as many family members as you need to your care circle.',
-    icon: '👨‍👩‍👧‍👦',
-  },
 }
 
 const PLAN_PERKS = [

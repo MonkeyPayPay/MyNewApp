@@ -8,7 +8,6 @@ const GATES = {
   documents:          1, // family+
   expenses:           1,
   ai_advisor:         1,
-  unlimited_members:  1,
   professional_carer: 2, // pro only
   hipaa:              2,
 }

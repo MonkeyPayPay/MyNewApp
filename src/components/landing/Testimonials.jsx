@@ -1,32 +1,18 @@
-import { Star, Quote } from 'lucide-react'
-
-const testimonials = [
+const scenarios = [
   {
-    name: 'Sarah M.',
-    role: 'Daughter, caring for mom with dementia',
-    location: 'Chicago, IL',
-    avatar: 'S',
-    color: 'from-indigo-500 to-purple-600',
-    quote: "Before CareCircle, my three siblings and I were constantly arguing about who paid for what and who dropped the ball. Now we have one place to see everything. The AI even caught that Mom's doctor visits were increasing before we did.",
-    rating: 5,
+    icon: '👨‍👩‍👧',
+    title: 'The sibling coordination problem',
+    body: "Three adult children, one aging parent, and an endless group text about who paid for what and who dropped the ball. CareCircle replaces the thread with one shared task board, one expense ledger, and one place everyone actually checks.",
   },
   {
-    name: 'David K.',
-    role: 'Son managing care from 1,000 miles away',
-    location: 'Austin, TX',
-    avatar: 'D',
-    color: 'from-orange-500 to-pink-600',
-    quote: "I live across the country but I feel like I'm there. Every morning I check the care feed and know exactly how Dad's doing. The expense splitter alone saves us a family argument every month.",
-    rating: 5,
+    icon: '✈️',
+    title: 'Caring for a parent from far away',
+    body: "The sibling who lives 1,000 miles away can't be there for the appointment, but can see it happened, see the notes, and see that everyone's pitching in — without a nightly phone call recapping the day.",
   },
   {
-    name: 'Maria L.',
-    role: 'Primary caregiver for both parents',
-    location: 'Miami, FL',
-    avatar: 'M',
-    color: 'from-emerald-500 to-teal-600',
-    quote: "I was drowning in sticky notes, group texts, and forgotten appointments. CareCircle gave me my sanity back. My brother finally feels included and my parents get better care. This app changed everything.",
-    rating: 5,
+    icon: '🧾',
+    title: 'The sandwich generation, financially',
+    body: "Prescriptions, groceries, gas for the visit, the copay nobody wrote down. Split expenses automatically across the family circle, export a clean record at tax time, and stop trying to remember who owes whom.",
   },
 ]
 
@@ -38,60 +24,36 @@ export default function Testimonials() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-4 py-1.5 mb-6">
-            <span className="text-orange-300 text-sm font-medium">Real families, real results</span>
+            <span className="text-orange-300 text-sm font-medium">Built for the moments that matter</span>
           </div>
           <h2 className="text-4xl lg:text-5xl font-black text-white mb-5 tracking-tight">
-            Families love{' '}
-            <span className="text-gradient">CareCircle</span>
+            Made for how families{' '}
+            <span className="text-gradient">actually coordinate care</span>
           </h2>
           <p className="text-slate-400 text-xl max-w-2xl mx-auto">
-            Join thousands of families who've replaced chaos with calm.
+            Every feature exists because of a specific, common way caregiving falls apart without it.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
+          {scenarios.map((s) => (
             <div
-              key={t.name}
-              className="glass rounded-2xl p-7 card-hover flex flex-col gap-5"
+              key={s.title}
+              className="glass rounded-2xl p-7 card-hover flex flex-col gap-4"
             >
-              {/* Rating */}
-              <div className="flex gap-1">
-                {[...Array(t.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-
-              {/* Quote icon */}
-              <Quote className="w-8 h-8 text-indigo-500/50 -mb-2" />
-
-              {/* Testimonial */}
-              <p className="text-slate-300 leading-relaxed text-sm flex-1">
-                "{t.quote}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-3 pt-3 border-t border-white/5">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
-                  {t.avatar}
-                </div>
-                <div>
-                  <p className="text-white font-semibold text-sm">{t.name}</p>
-                  <p className="text-slate-500 text-xs">{t.role}</p>
-                  <p className="text-slate-600 text-xs">{t.location}</p>
-                </div>
-              </div>
+              <span className="text-3xl">{s.icon}</span>
+              <h3 className="text-white font-bold text-lg">{s.title}</h3>
+              <p className="text-slate-300 leading-relaxed text-sm flex-1">{s.body}</p>
             </div>
           ))}
         </div>
 
-        {/* Trust badges */}
+        {/* Trust badges — only claims we can actually stand behind */}
         <div className="mt-12 flex flex-wrap justify-center items-center gap-8">
           {[
             { label: 'Encrypted & Private', icon: '🔒' },
-            { label: '4.9/5 App Store', icon: '⭐' },
-            { label: '50,000+ families', icon: '👨‍👩‍👧‍👦' },
-            { label: '24/7 Support', icon: '💬' },
+            { label: 'Free forever plan', icon: '🌱' },
+            { label: 'No credit card to start', icon: '✅' },
           ].map((badge) => (
             <div key={badge.label} className="flex items-center gap-2 glass rounded-full px-5 py-2.5">
               <span className="text-lg">{badge.icon}</span>

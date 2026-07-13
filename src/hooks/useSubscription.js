@@ -54,5 +54,10 @@ export function useSubscription() {
   const tier = subscription?.tier ?? 'free'
   const can = (feature) => canAccess(tier, subscription?.status, feature)
 
-  return { subscription, tier, loading, can, startCheckout, openPortal }
+  const isTrialing = subscription?.status === 'trialing'
+  const trialDaysLeft = isTrialing && subscription?.current_period_end
+    ? Math.max(0, Math.ceil((new Date(subscription.current_period_end).getTime() - Date.now()) / 86400000))
+    : null
+
+  return { subscription, tier, isTrialing, trialDaysLeft, loading, can, startCheckout, openPortal }
 }

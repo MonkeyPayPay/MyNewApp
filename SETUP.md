@@ -36,6 +36,7 @@ supabase functions deploy send-notification
 supabase functions deploy stripe-webhook
 supabase functions deploy summarize-document
 supabase functions deploy weekly-digest
+supabase functions deploy trial-reminders
 ```
 
 ## 3. Supabase Secrets
@@ -62,6 +63,10 @@ header wherever those functions are invoked:
   `care_feed_entries` INSERT (Dashboard → Database → Webhooks → add header)
 - **weekly-digest** — the cron schedule's HTTP headers (Dashboard →
   Edge Functions → weekly-digest → Schedule, cron `0 9 * * 1`)
+- **trial-reminders** — the cron schedule's HTTP headers (Dashboard →
+  Edge Functions → trial-reminders → Schedule, cron `0 14 * * *`) — emails
+  anyone whose 14-day trial has 3 days left, deduped via `notification_log`
+  so it only ever sends once per trial
 
 **Invites need no webhook**: the app calls `send-invite` directly after
 creating an invitation. If you prefer a Database Webhook on `invitations`
