@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useCircle } from './useCircle'
 
-export function useAIAdvisor() {
+export function useAIAdvisor(enabled = true) {
   const { user } = useAuth()
   const { circle } = useCircle()
   const [insights, setInsights] = useState(null)
@@ -34,8 +34,11 @@ export function useAIAdvisor() {
   }, [user, circle?.id])
 
   useEffect(() => {
-    if (circle?.id) fetchInsights()
-  }, [circle?.id, fetchInsights])
+    // `enabled` lets callers skip the fetch entirely for users who aren't
+    // entitled to this feature — otherwise every home-screen load would
+    // silently trigger a paid AI generation call for free-tier users too.
+    if (enabled && circle?.id) fetchInsights()
+  }, [enabled, circle?.id, fetchInsights])
 
   return { insights, loading, error, generatedAt, cached, refresh: () => fetchInsights(true) }
 }

@@ -4,6 +4,7 @@ import { CheckCircle, ChevronRight, Users, Brain, PartyPopper } from 'lucide-rea
 import { useAppointments } from '../../../hooks/useAppointments'
 import { useVitals } from '../../../hooks/useVitals'
 import { useCareFeed } from '../../../hooks/useCareFeed'
+import { useAIAdvisor } from '../../../hooks/useAIAdvisor'
 import { haptics } from '../../../lib/haptics'
 import DetailSlideOver from '../../ui/DetailSlideOver'
 import { FlyToProvider, useFlyTo } from './FlyToContext'
@@ -162,6 +163,11 @@ function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, ad
   const { appointments } = useAppointments(circleId)
   const vitals = useVitals(circleId)
   const { entries: feedEntries } = useCareFeed(circleId)
+  // Skip the fetch entirely (not just the display) for anyone not entitled
+  // to this feature — avoids a paid AI call firing on every home load.
+  const aiEnabled = !simplified && can('ai_advisor')
+  const { insights: aiInsights } = useAIAdvisor(aiEnabled)
+  const topInsight = aiEnabled ? aiInsights?.find(i => i.severity === 'high' || i.severity === 'medium') : null
   const [detailTask, setDetailTask] = useState(null)
   const sentinelRef = useRef(null)
   const isScrolled = useScrolledPastTop(sentinelRef)
@@ -253,6 +259,23 @@ function CareTimelineInner({ circleId, recipient, members, tasks, toggleTask, ad
             )}
           </AnimatePresence>
         </section>
+
+        {topInsight && (
+          <motion.button
+            onClick={() => onNavigate('ai')}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="w-full text-left flex items-start gap-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl px-5 py-4 hover:bg-indigo-500/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <span className="text-xl flex-shrink-0" role="img" aria-hidden="true">{topInsight.icon ?? '💡'}</span>
+            <div className="min-w-0">
+              <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest mb-1">Care Advisor noticed something</p>
+              <p className="text-white font-semibold text-sm leading-snug">{topInsight.title}</p>
+              <p className="text-slate-400 text-sm mt-1 leading-relaxed">{topInsight.body}</p>
+            </div>
+          </motion.button>
+        )}
 
         <QuickVitalsLog vitals={vitals} onLog={vitals.log} />
 

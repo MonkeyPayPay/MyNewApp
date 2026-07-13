@@ -1112,7 +1112,7 @@ function AddAppointmentModal({ defaultDateKey, onClose, onSave }) {
 // ── AIAdvisorView ─────────────────────────────────────────────────────────────
 
 function AIAdvisorView({ can, onUpgrade }) {
-  const { insights, loading, error, generatedAt, cached, refresh } = useAIAdvisor()
+  const { insights, loading, error, generatedAt, cached, refresh } = useAIAdvisor(!can || can('ai_advisor'))
 
   if (can && !can('ai_advisor')) {
     return (
