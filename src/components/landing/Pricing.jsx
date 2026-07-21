@@ -194,9 +194,12 @@ export default function Pricing({ onGetStarted, onGetStartedWithPlan }) {
               <p className="text-slate-400 text-sm">For senior living facilities, hospital discharge teams, and home care agencies</p>
             </div>
           </div>
-          <button className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 whitespace-nowrap">
+          <a
+            href="mailto:sales@carecircle.app"
+            className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 whitespace-nowrap"
+          >
             Contact Sales
-          </button>
+          </a>
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { Heart } from 'lucide-react'
+import IconBadge from '../ui/IconBadge'
 
 const links = {
   Product: ['Features', 'Pricing', 'Security', 'Mobile App', 'Changelog'],
@@ -20,22 +21,20 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white fill-white" />
-              </div>
+              <IconBadge icon={Heart} tone="brand" size="sm" iconClassName="fill-white" />
               <span className="text-white font-bold text-lg">CareCircle</span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed mb-5">
               The family command center for elder care coordination.
             </p>
+            {/* Not links — the app isn't published to either store yet.
+                A tappable-looking button here would go nowhere. */}
             <div className="flex gap-3">
               {['🍎', '🤖'].map((icon, i) => (
-                <button
-                  key={i}
-                  className="glass rounded-xl px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-                >
+                <div key={i} className="glass rounded-xl px-3 py-2 text-sm text-slate-500">
                   {icon} {i === 0 ? 'App Store' : 'Google Play'}
-                </button>
+                  <span className="text-slate-600"> · Soon</span>
+                </div>
               ))}
             </div>
           </div>

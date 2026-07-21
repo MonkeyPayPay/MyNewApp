@@ -1,4 +1,4 @@
-import { Bell, Mail, CheckCircle, Loader } from 'lucide-react'
+import { Bell, Mail, Loader } from 'lucide-react'
 import { useNotifications } from '../../hooks/useNotifications'
 
 const PREF_CONFIG = [

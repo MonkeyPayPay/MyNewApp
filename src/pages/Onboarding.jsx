@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { useCircle } from '../hooks/useCircle'
 import { supabase } from '../lib/supabase'
 import { track } from '../lib/analytics'
+import Button from '../components/ui/Button'
+import IconBadge from '../components/ui/IconBadge'
+import IconButton from '../components/ui/IconButton'
 
 const STEPS = ['Who you are', 'Your name', 'Care recipient', 'Invite family', 'You\'re set']
 
@@ -41,7 +44,6 @@ export default function Onboarding({ onComplete }) {
   const [recipientName, setRecipientName] = useState('')
   const [recipientDob, setRecipientDob] = useState('')
   const [inviteEmails, setInviteEmails] = useState([''])
-  const [circleId, setCircleId] = useState(null)
 
   const isRecipient = careRole === 'recipient'
 
@@ -60,7 +62,7 @@ export default function Onboarding({ onComplete }) {
     if (name.trim()) {
       await supabase.from('profiles').upsert({ id: user.id, full_name: name.trim(), care_role: careRole })
     }
-    const { circle, error } = await createCircle({
+    const { error } = await createCircle({
       recipientName: isRecipient ? name.trim() : recipientName,
       recipientDob: recipientDob || null,
     })
@@ -68,7 +70,6 @@ export default function Onboarding({ onComplete }) {
     if (error) {
       setError(error.message)
     } else {
-      setCircleId(circle.id)
       track('circle_created')
       next()
     }
@@ -87,16 +88,14 @@ export default function Onboarding({ onComplete }) {
   const updateEmail = (i, val) => setInviteEmails(prev => prev.map((e, idx) => idx === i ? val : e))
 
   return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center px-4 relative overflow-hidden">
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-[-150px] left-[-150px]" />
       <div className="orb w-[400px] h-[400px] bg-purple-700 bottom-[-100px] right-[-100px]" />
 
       <div className="relative w-full max-w-lg animate-fade-in">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white fill-white" />
-          </div>
+          <IconBadge icon={Heart} tone="brand" size="xs" iconClassName="fill-white" />
           <span className="text-white font-bold text-lg">CareCircle</span>
         </div>
 
@@ -131,9 +130,7 @@ export default function Onboarding({ onComplete }) {
                     onClick={() => chooseRole(role.value)}
                     className="w-full flex items-start gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/40 rounded-xl p-4 text-left transition-all"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
-                      {role.icon}
-                    </div>
+                    <IconBadge tone="indigo" size="sm" className="mt-0.5">{role.icon}</IconBadge>
                     <div>
                       <p className="text-white font-semibold text-sm">{role.title}</p>
                       <p className="text-slate-500 text-xs mt-0.5">{role.body}</p>
@@ -158,16 +155,12 @@ export default function Onboarding({ onComplete }) {
                 className="w-full bg-white/5 border border-white/10 focus:border-indigo-500/60 text-white placeholder:text-slate-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors mb-6"
               />
               <div className="flex gap-3">
-                <button onClick={back} className="glass px-5 py-3.5 rounded-xl text-slate-400 hover:text-white transition-colors text-sm">
+                <IconButton onClick={back} variant="solid" aria-label="Back">
                   <ArrowLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={next}
-                  disabled={!name.trim()}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
-                >
+                </IconButton>
+                <Button onClick={next} disabled={!name.trim()} size="lg" className="flex-1">
                   Continue <ArrowRight className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -210,16 +203,18 @@ export default function Onboarding({ onComplete }) {
               )}
 
               <div className="flex gap-3">
-                <button onClick={back} className="glass px-5 py-3.5 rounded-xl text-slate-400 hover:text-white transition-colors text-sm">
+                <IconButton onClick={back} variant="solid" aria-label="Back">
                   <ArrowLeft className="w-4 h-4" />
-                </button>
-                <button
+                </IconButton>
+                <Button
                   onClick={handleCreateCircle}
-                  disabled={(!isRecipient && !recipientName.trim()) || loading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
+                  disabled={!isRecipient && !recipientName.trim()}
+                  loading={loading}
+                  size="lg"
+                  className="flex-1"
                 >
                   {loading ? 'Creating...' : <>Create Care Circle <ArrowRight className="w-4 h-4" /></>}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -244,9 +239,9 @@ export default function Onboarding({ onComplete }) {
                       />
                     </div>
                     {inviteEmails.length > 1 && (
-                      <button onClick={() => removeEmailField(i)} className="text-slate-600 hover:text-rose-400 transition-colors">
+                      <IconButton onClick={() => removeEmailField(i)} variant="danger" aria-label="Remove email">
                         <X className="w-4 h-4" />
-                      </button>
+                      </IconButton>
                     )}
                   </div>
                 ))}
@@ -260,16 +255,12 @@ export default function Onboarding({ onComplete }) {
               </button>
 
               <div className="flex gap-3">
-                <button onClick={back} className="glass px-5 py-3.5 rounded-xl text-slate-400 hover:text-white transition-colors text-sm">
+                <IconButton onClick={back} variant="solid" aria-label="Back">
                   <ArrowLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleInvites}
-                  disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all"
-                >
+                </IconButton>
+                <Button onClick={handleInvites} loading={loading} size="lg" className="flex-1">
                   {loading ? 'Sending invites...' : <>Send Invites <ArrowRight className="w-4 h-4" /></>}
-                </button>
+                </Button>
               </div>
 
               <button
@@ -284,19 +275,14 @@ export default function Onboarding({ onComplete }) {
           {/* Step 4: Done */}
           {step === 4 && (
             <div className="text-center animate-fade-in py-4">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-indigo-500/30">
-                <Heart className="w-10 h-10 text-white fill-white animate-pulse-slow" />
-              </div>
+              <IconBadge icon={Heart} tone="brand" size="xl" iconClassName="fill-white animate-pulse-slow" className="mx-auto mb-5 shadow-xl shadow-indigo-500/30" />
               <h2 className="text-white font-black text-2xl mb-3">Your circle is ready!</h2>
               <p className="text-slate-400 leading-relaxed mb-8">
                 Invites have been sent. Your family can now coordinate care for your loved one — together.
               </p>
-              <button
-                onClick={onComplete}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-sm transition-all"
-              >
+              <Button onClick={onComplete} size="lg" className="w-full">
                 Go to Dashboard <ArrowRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

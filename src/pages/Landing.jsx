@@ -14,7 +14,7 @@ export default function Landing({ onGetStarted, onGetStartedWithPlan }) {
   useEffect(() => { track('page_view', { page: 'landing' }, { once: true }) }, [])
 
   return (
-    <div className="min-h-screen bg-[#050510]">
+    <div className="min-h-screen bg-ink-950">
       <Navbar onGetStarted={onGetStarted} />
       <Hero onGetStarted={onGetStarted} />
       <Stats />

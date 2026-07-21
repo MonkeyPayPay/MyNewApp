@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Heart, Mail, ArrowRight, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import Button from '../components/ui/Button'
+import IconBadge from '../components/ui/IconBadge'
 
 export default function Auth() {
   const { signInWithEmail, signInWithGoogle } = useAuth()
@@ -30,7 +32,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background orbs */}
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-[-150px] left-[-150px]" />
       <div className="orb w-[400px] h-[400px] bg-purple-700 bottom-[-100px] right-[-100px]" />
@@ -38,9 +40,7 @@ export default function Auth() {
       <div className="relative w-full max-w-md animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-xl shadow-indigo-500/30">
-            <Heart className="w-7 h-7 text-white fill-white" />
-          </div>
+          <IconBadge icon={Heart} tone="brand" size="lg" iconClassName="fill-white" className="mx-auto mb-4 shadow-xl shadow-indigo-500/30" />
           <h1 className="text-white font-black text-2xl tracking-tight">CareCircle</h1>
           <p className="text-slate-400 text-sm mt-1">The family command center for elder care</p>
         </div>
@@ -71,7 +71,7 @@ export default function Auth() {
               {/* Google */}
               <button
                 onClick={handleGoogle}
-                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-800 font-semibold py-3.5 rounded-xl text-sm transition-all duration-200 mb-4"
+                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-800 font-semibold h-12 rounded-xl text-sm transition-all duration-200 mb-4"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -109,14 +109,9 @@ export default function Auth() {
                   <p className="text-rose-400 text-xs mb-4 bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-all duration-200"
-                >
-                  {loading ? 'Sending...' : 'Send Magic Link'}
-                  {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                </button>
+                <Button type="submit" disabled={!email} loading={loading} className="w-full group">
+                  {loading ? 'Sending...' : <>Send Magic Link <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
+                </Button>
               </form>
 
               <p className="text-slate-600 text-xs text-center mt-5">

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Heart, Users, CheckCircle, AlertCircle, Loader, ArrowRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { track } from '../lib/analytics'
+import Button from '../components/ui/Button'
+import IconBadge from '../components/ui/IconBadge'
 
 export default function JoinCircle({ token, onComplete }) {
   const [preview,  setPreview]  = useState(null)
@@ -29,15 +31,13 @@ export default function JoinCircle({ token, onComplete }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#050510] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center px-4 relative overflow-hidden">
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-[-150px] left-[-150px]" />
       <div className="orb w-[400px] h-[400px] bg-purple-700 bottom-[-100px] right-[-100px]" />
 
       <div className="relative w-full max-w-md animate-fade-in">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white fill-white" />
-          </div>
+          <IconBadge icon={Heart} tone="brand" size="xs" iconClassName="fill-white" />
           <span className="text-white font-bold text-lg">CareCircle</span>
         </div>
 
@@ -51,9 +51,7 @@ export default function JoinCircle({ token, onComplete }) {
 
           {!loading && error && (
             <div className="text-center py-4">
-              <div className="w-14 h-14 rounded-2xl bg-rose-500/20 flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-7 h-7 text-rose-400" />
-              </div>
+              <IconBadge icon={AlertCircle} tone="rose" size="lg" className="mx-auto mb-4" />
               <h2 className="text-white font-bold text-xl mb-2">Invitation not found</h2>
               <p className="text-slate-500 text-sm mb-6 leading-relaxed">{error}</p>
               <a href="/" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors">
@@ -64,9 +62,7 @@ export default function JoinCircle({ token, onComplete }) {
 
           {!loading && !error && !joined && preview && (
             <div className="animate-fade-in">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-500/20 flex items-center justify-center mx-auto mb-5">
-                <Users className="w-8 h-8 text-indigo-400" />
-              </div>
+              <IconBadge icon={Users} tone="indigo" size="xl" className="mx-auto mb-5" />
               <h2 className="text-white font-black text-2xl text-center mb-2">You're invited!</h2>
               <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
                 <span className="text-white font-semibold">{preview.inviter_name}</span> invited you to help care for{' '}
@@ -87,33 +83,22 @@ export default function JoinCircle({ token, onComplete }) {
                 ))}
               </div>
 
-              <button
-                onClick={handleJoin}
-                disabled={joining}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-sm transition-all"
-              >
-                {joining
-                  ? <><Loader className="w-4 h-4 animate-spin" /> Joining…</>
-                  : <>Join Care Circle <ArrowRight className="w-4 h-4" /></>}
-              </button>
+              <Button onClick={handleJoin} loading={joining} size="lg" className="w-full">
+                {joining ? 'Joining…' : <>Join Care Circle <ArrowRight className="w-4 h-4" /></>}
+              </Button>
             </div>
           )}
 
           {joined && (
             <div className="text-center py-4 animate-fade-in">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-emerald-500/30">
-                <CheckCircle className="w-10 h-10 text-white fill-white" />
-              </div>
+              <IconBadge icon={CheckCircle} tone="emerald" size="xl" iconClassName="fill-white" className="mx-auto mb-5 shadow-xl shadow-emerald-500/30" />
               <h2 className="text-white font-black text-2xl mb-3">You're in!</h2>
               <p className="text-slate-400 text-sm mb-8 leading-relaxed">
                 Welcome to the circle. You can now coordinate care with your family.
               </p>
-              <button
-                onClick={onComplete}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-sm transition-all"
-              >
+              <Button onClick={onComplete} size="lg" className="w-full">
                 Go to Dashboard <ArrowRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

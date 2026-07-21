@@ -1,4 +1,4 @@
-import { ArrowRight, Play, CheckCircle, Users, Calendar, FileText, DollarSign } from 'lucide-react'
+import { ArrowRight, Play, CheckCircle, FileText, DollarSign } from 'lucide-react'
 
 const mockFeedItems = [
   { icon: '💊', text: 'Medication logged — Lisinopril 10mg', time: '2m ago', color: 'text-emerald-400' },
@@ -90,14 +90,14 @@ export default function Hero({ onGetStarted }) {
                     {['M', 'S', 'J'].map((initial, i) => (
                       <div
                         key={i}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#050510] ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-ink-950 ${
                           i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : 'bg-orange-500'
                         } text-white`}
                       >
                         {initial}
                       </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#050510] bg-slate-700 text-slate-300">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-ink-950 bg-slate-700 text-slate-300">
                       +1
                     </div>
                   </div>
