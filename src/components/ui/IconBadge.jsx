@@ -20,13 +20,14 @@ const TONES = {
 
 /**
  * Icon: Component, sized to match automatically (e.g. `icon={Brain}`).
- * For a raw emoji/glyph, pass children instead.
+ * For a raw emoji/glyph, pass children instead. `iconClassName` extends
+ * (not overrides) the icon's own classes — e.g. `fill-white` for the brand mark.
  */
-export default function IconBadge({ icon: Icon, children, size = 'md', tone = 'brand', className = '' }) {
+export default function IconBadge({ icon: Icon, children, size = 'md', tone = 'brand', className = '', iconClassName = '' }) {
   const s = SIZES[size]
   return (
     <div className={`flex-shrink-0 flex items-center justify-center ${s.box} ${s.radius} ${TONES[tone]} ${className}`}>
-      {Icon ? <Icon className={`${s.icon} ${tone === 'brand' ? 'text-white' : ''}`} /> : children}
+      {Icon ? <Icon className={`${s.icon} ${tone === 'brand' ? 'text-white' : ''} ${iconClassName}`} /> : children}
     </div>
   )
 }

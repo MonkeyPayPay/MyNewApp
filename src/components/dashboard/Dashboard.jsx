@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
-  Bell, LogOut, Zap, CreditCard, UserPlus, Brain, Activity
+  Bell, LogOut, Zap, CreditCard, UserPlus, Brain, Activity, Menu
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
 import { useTasks } from '../../hooks/useTasks'
 import { useSubscription } from '../../hooks/useSubscription'
+import { fadeSlideUp } from '../../lib/motion'
+import IconBadge from '../ui/IconBadge'
+import IconButton from '../ui/IconButton'
 import UpgradeModal from '../ui/UpgradeModal'
 import NotificationSettings from './NotificationSettings'
 import CareTimeline from './care/CareTimeline'
@@ -98,17 +102,15 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
   }
 
   return (
-    <div className="flex h-screen bg-[#0a0a1a] overflow-hidden">
+    <div className="flex h-screen bg-ink-900 overflow-hidden">
       {upgradeModal && <UpgradeModal feature={upgradeModal} onClose={() => setUpgradeModal(null)} />}
       {showInviteModal && <InviteModal can={can} onClose={() => setShowInviteModal(false)} onSend={inviteMember} />}
 
       {/* Sidebar */}
-      <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-[#050510] border-r border-white/5 flex flex-col`}>
+      <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-ink-950 border-r border-white/5 flex flex-col`}>
         <div className="px-4 pb-4 pt-safe border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-              <Heart className="w-4 h-4 text-white fill-white" />
-            </div>
+            <IconBadge icon={Heart} tone="brand" size="sm" iconClassName="fill-white" />
             {sidebarOpen && <span className="text-white font-bold text-lg tracking-tight">CareCircle</span>}
           </div>
         </div>
@@ -212,33 +214,33 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-[#050510]/80 backdrop-blur border-b border-white/5 px-6 pb-4 pt-safe flex items-center justify-between flex-shrink-0">
+        <header className="bg-ink-950/80 backdrop-blur border-b border-white/5 px-6 pb-4 pt-safe flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-slate-500 hover:text-white transition-colors">
-              <div className="space-y-1.5">
-                <div className="w-5 h-0.5 bg-current rounded" />
-                <div className="w-4 h-0.5 bg-current rounded" />
-                <div className="w-5 h-0.5 bg-current rounded" />
-              </div>
-            </button>
+            <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'} className="-ml-2.5">
+              <Menu className="w-5 h-5" />
+            </IconButton>
             <div>
               <h1 className="text-white font-bold text-lg">{navItems.find(n => n.id === activeNav)?.label || 'Dashboard'}</h1>
               <p className="text-slate-500 text-xs">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="relative text-slate-500 hover:text-white transition-colors p-2">
+            <IconButton aria-label="Notifications">
               <Bell className="w-5 h-5" />
-            </button>
+            </IconButton>
             <button className="flex items-center gap-2 glass rounded-xl px-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
+              <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-white text-xs font-bold">{initials}</div>
               <span className="text-slate-300 text-sm font-medium">{firstName}</span>
             </button>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">
-          {renderContent()}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={activeNav} {...fadeSlideUp}>
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
