@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X, Loader } from 'lucide-react'
 import { haptics } from '../../../lib/haptics'
 import { inferDueDate } from '../../../lib/dateParsing'
-
-const EASE = [0.22, 1, 0.36, 1]
+import { EASE_CALM as EASE } from '../../../lib/motion'
 
 export default function QuickCapture({ onAddTask }) {
   const [open, setOpen] = useState(false)

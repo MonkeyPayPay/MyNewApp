@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, ChevronRight, Users, Brain, PartyPopper, Repeat } from 'lucide-react'
+import { EASE_CALM as EASE } from '../../../lib/motion'
 import { useAppointments } from '../../../hooks/useAppointments'
 import { useVitals } from '../../../hooks/useVitals'
 import { useCareFeed } from '../../../hooks/useCareFeed'
@@ -12,7 +13,6 @@ import LiveStatusHeader from './LiveStatusHeader'
 import QuickVitalsLog from './QuickVitalsLog'
 import QuickCapture from './QuickCapture'
 
-const EASE = [0.22, 1, 0.36, 1] // calm, grounded deceleration
 const PRIORITY_DOT = { high: 'bg-rose-400', medium: 'bg-amber-400', low: 'bg-emerald-400' }
 
 function findScrollParent(el) {

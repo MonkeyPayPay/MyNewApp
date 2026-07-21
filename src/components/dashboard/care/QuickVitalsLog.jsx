@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, Droplet, Activity, HeartPulse } from 'lucide-react'
 import { haptics } from '../../../lib/haptics'
+import { EASE_CALM as EASE } from '../../../lib/motion'
 
 const MOODS = [
   { value: 1, emoji: '😞', label: 'Struggling' },
@@ -10,8 +11,6 @@ const MOODS = [
   { value: 4, emoji: '🙂', label: 'Good' },
   { value: 5, emoji: '😄', label: 'Great' },
 ]
-
-const EASE = [0.22, 1, 0.36, 1] // calm, deliberate deceleration — no snappy overshoot
 
 function BigStepper({ label, value, onChange, min, max, step = 1, unit = '' }) {
   return (
