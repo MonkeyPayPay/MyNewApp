@@ -25,8 +25,8 @@ export default function CTABanner({ onGetStarted }) {
             </h2>
 
             <p className="text-white/80 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Stop letting caregiving overwhelm you. Join 50,000+ families who've
-              found peace of mind with CareCircle. Start free today — no credit card needed.
+              Stop letting caregiving overwhelm you. Start free today —
+              no credit card needed, no complicated setup.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

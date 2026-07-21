@@ -1,5 +1,6 @@
 import { Check, Zap, Shield } from 'lucide-react'
 import { useState } from 'react'
+import { useSubscription } from '../../hooks/useSubscription'
 
 const plans = [
   {
@@ -11,9 +12,8 @@ const plans = [
     tag: null,
     features: [
       '1 care recipient',
-      'Up to 3 family members',
-      '30-day care log',
-      'Basic task board',
+      'Unlimited family members',
+      'Care log & task board',
       'Shared calendar',
       'Mobile app access',
     ],
@@ -21,7 +21,7 @@ const plans = [
       'Document vault',
       'Expense splitting',
       'AI Care Advisor',
-      'Professional caregivers',
+      'Professional caregiver access',
     ],
   },
   {
@@ -29,51 +29,58 @@ const plans = [
     price: { monthly: 12.99, annual: 9.99 },
     description: 'The complete family solution',
     color: 'border-indigo-500/50',
-    buttonStyle: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25',
+    buttonStyle: 'bg-brand bg-brand-hover text-white shadow-lg shadow-indigo-500/25',
     tag: 'Most Popular',
     features: [
       'Unlimited family members',
-      'Up to 3 care recipients',
       'Full care log history',
       'Document vault (500MB)',
       'Expense splitting & export',
       'AI Care Advisor',
-      'Priority email support',
       'Mobile + desktop apps',
     ],
     missing: [
       'Professional caregiver access',
-      'HIPAA Business Associate Agreement',
     ],
   },
   {
     name: 'Pro',
     price: { monthly: 29.99, annual: 24.99 },
-    description: 'For complex care situations',
+    description: 'For families coordinating with paid caregivers',
     color: 'border-orange-500/30',
     buttonStyle: 'bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-400 hover:to-pink-500 text-white',
     tag: null,
     features: [
       'Everything in Family',
-      'Unlimited care recipients',
       'Professional caregiver portal',
-      'Medication interaction alerts',
-      'Health records integration',
+      'Recurring medication & task schedules',
       'Document vault (5GB)',
-      'HIPAA BAA included',
-      'Phone support',
-      'Custom care plans',
-      'Insurance claim assistant',
     ],
     missing: [],
   },
 ]
 
-export default function Pricing({ onGetStarted }) {
+export default function Pricing({ onGetStarted, onGetStartedWithPlan }) {
   const [annual, setAnnual] = useState(true)
+  const { tier, startCheckout } = useSubscription()
+
+  async function handlePlanClick(plan) {
+    if (plan.name === 'Free') { onGetStarted(); return }
+    const interval = annual ? 'annual' : 'monthly'
+    const planTier = plan.name.toLowerCase()
+    // Authenticated user on free tier → go straight to Stripe
+    if (tier !== 'free') { onGetStarted(); return }
+    try {
+      await startCheckout(planTier, interval)
+    } catch {
+      // Not authenticated — save intent and show sign-up; checkout resumes after auth
+      if (onGetStartedWithPlan) onGetStartedWithPlan(planTier, interval)
+      else onGetStarted()
+    }
+  }
 
   return (
-    <section id="pricing" className="py-24 relative">
+    <section id="pricing" className="py-24 relative overflow-hidden">
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-0 left-[-10%]" />
 
       <div className="max-w-7xl mx-auto px-6">
@@ -123,7 +130,7 @@ export default function Pricing({ onGetStarted }) {
             >
               {plan.tag && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                  <span className="bg-brand text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
                     <Zap className="w-3 h-3 fill-white" />
                     {plan.tag}
                   </span>
@@ -152,10 +159,10 @@ export default function Pricing({ onGetStarted }) {
               </div>
 
               <button
-                onClick={onGetStarted}
+                onClick={() => handlePlanClick(plan)}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-200 mb-7 ${plan.buttonStyle}`}
               >
-                {plan.price.monthly === 0 ? 'Get Started Free' : `Start ${plan.name} Plan`}
+                {plan.price.monthly === 0 ? 'Get Started Free' : `Start ${plan.name} — 14-day trial`}
               </button>
 
               <div className="space-y-3">
@@ -187,9 +194,12 @@ export default function Pricing({ onGetStarted }) {
               <p className="text-slate-400 text-sm">For senior living facilities, hospital discharge teams, and home care agencies</p>
             </div>
           </div>
-          <button className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 whitespace-nowrap">
+          <a
+            href="mailto:sales@carecircle.app"
+            className="bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all duration-200 whitespace-nowrap"
+          >
             Contact Sales
-          </button>
+          </a>
         </div>
       </div>
     </section>

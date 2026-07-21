@@ -55,7 +55,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-24 relative">
+    <section id="features" className="py-24 relative overflow-hidden">
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-[10%] left-[-20%]" />
 
       <div className="max-w-7xl mx-auto px-6">

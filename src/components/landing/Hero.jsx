@@ -1,4 +1,4 @@
-import { ArrowRight, Play, CheckCircle, Users, Calendar, FileText, DollarSign } from 'lucide-react'
+import { ArrowRight, Play, CheckCircle, FileText, DollarSign } from 'lucide-react'
 
 const mockFeedItems = [
   { icon: '💊', text: 'Medication logged — Lisinopril 10mg', time: '2m ago', color: 'text-emerald-400' },
@@ -27,7 +27,7 @@ export default function Hero({ onGetStarted }) {
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-slow" />
-              <span className="text-indigo-300 text-sm font-medium">Now in public beta — free to start</span>
+              <span className="text-indigo-300 text-sm font-medium">Free to start — no credit card</span>
             </div>
 
             <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight mb-6">
@@ -47,7 +47,7 @@ export default function Hero({ onGetStarted }) {
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <button
                 onClick={onGetStarted}
-                className="group flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+                className="group flex items-center justify-center gap-2 bg-brand bg-brand-hover text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
               >
                 Start Free — No Credit Card
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -62,7 +62,7 @@ export default function Hero({ onGetStarted }) {
               {[
                 '53M caregivers in the US',
                 'Free forever plan',
-                'HIPAA-ready',
+                'Encrypted & private',
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -90,14 +90,14 @@ export default function Hero({ onGetStarted }) {
                     {['M', 'S', 'J'].map((initial, i) => (
                       <div
                         key={i}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#050510] ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-ink-950 ${
                           i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-500' : 'bg-orange-500'
                         } text-white`}
                       >
                         {initial}
                       </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-[#050510] bg-slate-700 text-slate-300">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 border-ink-950 bg-slate-700 text-slate-300">
                       +1
                     </div>
                   </div>

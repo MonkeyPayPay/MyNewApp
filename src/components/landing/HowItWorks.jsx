@@ -52,7 +52,7 @@ export default function HowItWorks() {
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center text-white mx-auto shadow-xl group-hover:scale-110 transition-transform duration-300`}>
                   {step.icon}
                 </div>
-                <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#050510] border-2 border-white/10 flex items-center justify-center">
+                <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-ink-950 border-2 border-white/10 flex items-center justify-center">
                   <span className="text-slate-400 text-xs font-bold">{i + 1}</span>
                 </div>
               </div>
