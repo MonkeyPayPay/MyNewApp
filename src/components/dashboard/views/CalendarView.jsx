@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { Calendar, Plus, ChevronRight, ChevronLeft, X, Trash2, Loader, Paperclip } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Calendar, Plus, ChevronRight, ChevronLeft, Trash2, Paperclip } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useAppointments } from '../../../hooks/useAppointments'
 import { useDocuments } from '../../../hooks/useDocuments'
 import { getDocumentSignedUrl } from '../../../lib/documentStorage'
+import { fadeSlideUp } from '../../../lib/motion'
+import Button from '../../ui/Button'
+import IconButton from '../../ui/IconButton'
+import Modal from '../../ui/Modal'
 
 // ── CalendarView ──────────────────────────────────────────────────────────────
 
@@ -51,27 +56,24 @@ export default function CalendarView({ circleId, can }) {
           <h2 className="text-white font-bold text-xl">Calendar</h2>
           <p className="text-slate-500 text-sm">Appointments, visits, and care events</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
-        >
+        <Button onClick={() => setShowModal(true)}>
           <Plus className="w-4 h-4" /> Add Appointment
-        </button>
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Month grid */}
         <div className="lg:col-span-2 glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+            <IconButton onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} aria-label="Previous month">
               <ChevronLeft className="w-5 h-5" />
-            </button>
+            </IconButton>
             <h3 className="text-white font-bold text-lg">
               {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h3>
-            <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+            <IconButton onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} aria-label="Next month">
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </IconButton>
           </div>
 
           <div className="grid grid-cols-7 mb-2">
@@ -91,7 +93,7 @@ export default function CalendarView({ circleId, can }) {
                 <button
                   key={day}
                   onClick={() => setSelectedDay(day === selectedDay ? null : day)}
-                  className={`relative aspect-square flex flex-col items-center justify-start pt-1.5 rounded-xl text-sm font-medium transition-all ${
+                  className={`relative aspect-square min-h-11 flex flex-col items-center justify-start pt-1.5 rounded-xl text-sm font-medium transition-all ${
                     isSel    ? 'bg-indigo-600 text-white'
                     : isToday ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
                     : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -107,57 +109,64 @@ export default function CalendarView({ circleId, can }) {
 
         {/* Day panel */}
         <div className="glass rounded-2xl p-5">
-          {selectedDay ? (
-            <>
-              <h3 className="text-white font-bold mb-1">
-                {new Date(year, month, selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </h3>
-              <p className="text-slate-500 text-xs mb-5">{selectedAppts.length} appointment{selectedAppts.length !== 1 ? 's' : ''}</p>
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedDay ? (
+              <motion.div key={selectedKey} {...fadeSlideUp}>
+                <h3 className="text-white font-bold mb-1">
+                  {new Date(year, month, selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </h3>
+                <p className="text-slate-500 text-xs mb-5">{selectedAppts.length} appointment{selectedAppts.length !== 1 ? 's' : ''}</p>
 
-              {selectedAppts.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                  <p className="text-slate-600 text-sm">Nothing scheduled</p>
-                  <button onClick={() => setShowModal(true)} className="text-indigo-400 hover:text-indigo-300 text-xs mt-3 font-medium transition-colors">Add appointment →</button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {selectedAppts.map(appt => (
-                    <div key={appt.id} className="bg-white/5 rounded-xl p-4 group">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-white font-semibold text-sm">{appt.title}</p>
-                        {appt.created_by === user?.id && (
-                          <button onClick={() => deleteAppointment(appt.id)} className="text-slate-700 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0">
-                            <Trash2 className="w-3.5 h-3.5" />
+                {selectedAppts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+                    <p className="text-slate-600 text-sm">Nothing scheduled</p>
+                    <button onClick={() => setShowModal(true)} className="text-indigo-400 hover:text-indigo-300 text-xs mt-3 font-medium transition-colors">Add appointment →</button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedAppts.map(appt => (
+                      <div key={appt.id} className="bg-white/5 rounded-xl p-4 group">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-white font-semibold text-sm">{appt.title}</p>
+                          {appt.created_by === user?.id && (
+                            <IconButton
+                              onClick={() => deleteAppointment(appt.id)}
+                              variant="danger"
+                              aria-label={`Delete ${appt.title}`}
+                              className="opacity-40 group-hover:opacity-100 flex-shrink-0 -mt-2 -mr-2"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </IconButton>
+                          )}
+                        </div>
+                        <p className="text-indigo-400 text-xs mt-1">
+                          {new Date(appt.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {appt.ends_at && ` – ${new Date(appt.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        </p>
+                        {appt.location && <p className="text-slate-500 text-xs mt-1.5">📍 {appt.location}</p>}
+                        {appt.notes && <p className="text-slate-500 text-xs mt-2 leading-relaxed">{appt.notes}</p>}
+                        {appt.document && (
+                          <button
+                            onClick={() => viewDocument(appt.document)}
+                            className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-xs mt-2 transition-colors"
+                          >
+                            <Paperclip className="w-3 h-3" /> {appt.document.name}
                           </button>
                         )}
                       </div>
-                      <p className="text-indigo-400 text-xs mt-1">
-                        {new Date(appt.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        {appt.ends_at && ` – ${new Date(appt.ends_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                      </p>
-                      {appt.location && <p className="text-slate-500 text-xs mt-1.5">📍 {appt.location}</p>}
-                      {appt.notes && <p className="text-slate-500 text-xs mt-2 leading-relaxed">{appt.notes}</p>}
-                      {appt.document && (
-                        <button
-                          onClick={() => viewDocument(appt.document)}
-                          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-xs mt-2 transition-colors"
-                        >
-                          <Paperclip className="w-3 h-3" /> {appt.document.name}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">Select a date</p>
-              <p className="text-slate-600 text-xs mt-1">Tap any day to see or add appointments</p>
-            </div>
-          )}
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div key="empty" {...fadeSlideUp} className="text-center py-12">
+                <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">Select a date</p>
+                <p className="text-slate-600 text-xs mt-1">Tap any day to see or add appointments</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -234,68 +243,64 @@ function AddAppointmentModal({ defaultDateKey, circleId, can, onClose, onSave })
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="glass rounded-2xl p-6 w-full max-w-md border border-white/10" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-white font-bold text-lg">New Appointment</h3>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
-        </div>
-
-        <div className="space-y-4 mb-5">
-          <div>
-            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Dr. Chen Annual Checkup" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+    <Modal onClose={onClose} title="New Appointment">
+      {(requestClose) => (
+        <>
+          <div className="space-y-4 mb-5">
             <div>
-              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Starts</label>
-              <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Title</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Dr. Chen Annual Checkup" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
             </div>
-            <div>
-              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Ends (optional)</label>
-              <input type="datetime-local" value={endsAt} onChange={e => setEndsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
-            </div>
-          </div>
 
-          <div>
-            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Location</label>
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Mayo Clinic, 200 First St SW" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
-          </div>
-
-          <div>
-            <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Notes</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Preparation notes, what to bring, etc." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-indigo-500/50 transition-all" />
-          </div>
-
-          {canLinkDocument && documents.length > 0 && (
-            <div>
-              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Attach a document (optional)</label>
-              <div className="relative">
-                <Paperclip className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                <select
-                  value={documentId}
-                  onChange={e => setDocumentId(e.target.value)}
-                  className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all"
-                >
-                  <option value="" className="bg-[#1a1a2e]">None</option>
-                  {documents.map(doc => (
-                    <option key={doc.id} value={doc.id} className="bg-[#1a1a2e]">{doc.name}</option>
-                  ))}
-                </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Starts</label>
+                <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
+              </div>
+              <div>
+                <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Ends (optional)</label>
+                <input type="datetime-local" value={endsAt} onChange={e => setEndsAt(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]" />
               </div>
             </div>
-          )}
-        </div>
 
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 text-sm font-medium hover:bg-white/5 transition-all">Cancel</button>
-          <button onClick={handleSave} disabled={!title.trim() || !startsAt || saving} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2">
-            {saving ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</> : 'Save Appointment'}
-          </button>
-        </div>
-      </div>
-    </div>
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Location</label>
+              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Mayo Clinic, 200 First St SW" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all" />
+            </div>
+
+            <div>
+              <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Notes</label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Preparation notes, what to bring, etc." rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 resize-none focus:outline-none focus:border-indigo-500/50 transition-all" />
+            </div>
+
+            {canLinkDocument && documents.length > 0 && (
+              <div>
+                <label className="text-slate-500 text-xs uppercase tracking-widest font-medium block mb-2">Attach a document (optional)</label>
+                <div className="relative">
+                  <Paperclip className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                  <select
+                    value={documentId}
+                    onChange={e => setDocumentId(e.target.value)}
+                    className="w-full appearance-none bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all"
+                  >
+                    <option value="" className="bg-ink-900">None</option>
+                    {documents.map(doc => (
+                      <option key={doc.id} value={doc.id} className="bg-ink-900">{doc.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={requestClose} className="flex-1">Cancel</Button>
+            <Button onClick={handleSave} disabled={!title.trim() || !startsAt} loading={saving} className="flex-1">
+              {saving ? 'Saving…' : 'Save Appointment'}
+            </Button>
+          </div>
+        </>
+      )}
+    </Modal>
   )
 }
-

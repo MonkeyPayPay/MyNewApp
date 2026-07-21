@@ -1,7 +1,13 @@
-import { useState } from 'react'
-import { FolderOpen, Upload, Trash2, Loader } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FolderOpen, Upload, Trash2 } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useDocuments } from '../../../hooks/useDocuments'
+import { fadeSlideUp } from '../../../lib/motion'
+import Button from '../../ui/Button'
+import IconButton from '../../ui/IconButton'
+import IconBadge from '../../ui/IconBadge'
+import Card from '../../ui/Card'
 
 // ── DocumentsView ─────────────────────────────────────────────────────────────
 
@@ -12,6 +18,7 @@ export default function DocumentsView({ circleId }) {
   const { documents, loading, uploading, uploadDocument, deleteDocument, getSignedUrl, usedBytes, quotaBytes } = useDocuments(circleId)
   const [dragOver, setDragOver] = useState(false)
   const [uploadError, setUploadError] = useState(null)
+  const fileInputRef = useRef(null)
 
   async function handleFiles(files) {
     setUploadError(null)
@@ -54,17 +61,16 @@ export default function DocumentsView({ circleId }) {
           <h2 className="text-white font-bold text-xl">Document Vault</h2>
           <p className="text-slate-500 text-sm">Securely store and share important documents</p>
         </div>
-        <label className={`flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
-          {uploading
-            ? <><Loader className="w-4 h-4 animate-spin" /> Uploading…</>
-            : <><Upload className="w-4 h-4" /> Upload</>}
-          <input
-            type="file" className="hidden" multiple
-            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx"
-            onChange={e => handleFiles(Array.from(e.target.files ?? []))}
-            disabled={uploading}
-          />
-        </label>
+        <input
+          ref={fileInputRef}
+          type="file" className="hidden" multiple
+          accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx"
+          onChange={e => handleFiles(Array.from(e.target.files ?? []))}
+          disabled={uploading}
+        />
+        <Button onClick={() => fileInputRef.current?.click()} loading={uploading}>
+          {uploading ? 'Uploading…' : <><Upload className="w-4 h-4" /> Upload</>}
+        </Button>
       </div>
 
       <div className="flex items-center gap-3 mb-6">
@@ -83,8 +89,8 @@ export default function DocumentsView({ circleId }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(Array.from(e.dataTransfer.files)) }}
       >
-        <div className={`w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-4 transition-transform ${dragOver ? 'scale-125' : 'group-hover:scale-110'}`}>
-          <Upload className="w-6 h-6 text-indigo-400" />
+        <div className={`mx-auto mb-4 transition-transform ${dragOver ? 'scale-125' : ''}`}>
+          <IconBadge icon={Upload} tone="indigo" size="lg" className="mx-auto" />
         </div>
         <p className="text-white font-semibold mb-1">{dragOver ? 'Drop to upload' : 'Drop files here to upload'}</p>
         <p className="text-slate-500 text-sm">PDF, JPG, PNG, DOCX up to 10 MB</p>
@@ -101,40 +107,44 @@ export default function DocumentsView({ circleId }) {
       )}
 
       {!loading && documents.length === 0 && (
-        <div className="glass rounded-2xl p-16 text-center border border-white/5">
+        <Card padding="p-16" className="text-center">
           <FolderOpen className="w-10 h-10 text-slate-700 mx-auto mb-4" />
           <p className="text-white font-semibold mb-2">No documents yet</p>
-          <p className="text-slate-500 text-sm">Upload living wills, insurance cards, and medication lists.</p>
-        </div>
+          <p className="text-slate-500 text-sm mb-5">Upload living wills, insurance cards, and medication lists.</p>
+          <button onClick={() => fileInputRef.current?.click()} className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors">Upload the first document →</button>
+        </Card>
       )}
 
       {documents.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {documents.map((doc) => (
-            <div key={doc.id} className="glass rounded-2xl p-5 card-hover relative group">
-              <div className="flex items-start justify-between mb-4">
-                <div className="text-3xl">{docIcon(doc.mime_type, doc.name)}</div>
-                {doc.uploaded_by === user?.id && (
-                  <button
-                    onClick={() => deleteDocument(doc)}
-                    className="text-slate-700 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <button onClick={() => handleView(doc)} className="block w-full text-left">
-                <p className="text-white font-semibold text-sm mb-1 truncate" title={doc.name}>{doc.name}</p>
-                <p className="text-slate-600 text-xs">{fmtSize(doc.file_size)} · {doc.profiles?.full_name ?? 'You'}</p>
-                {doc.ai_summary && (
-                  <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2">{doc.ai_summary}</p>
-                )}
-              </button>
-            </div>
-          ))}
+          <AnimatePresence initial={false}>
+            {documents.map((doc) => (
+              <motion.div key={doc.id} layout {...fadeSlideUp} className="glass rounded-2xl p-5 card-hover relative group">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="text-3xl">{docIcon(doc.mime_type, doc.name)}</div>
+                  {doc.uploaded_by === user?.id && (
+                    <IconButton
+                      onClick={() => deleteDocument(doc)}
+                      variant="danger"
+                      aria-label={`Delete ${doc.name}`}
+                      className="opacity-40 group-hover:opacity-100 -mt-2 -mr-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </IconButton>
+                  )}
+                </div>
+                <button onClick={() => handleView(doc)} className="block w-full text-left">
+                  <p className="text-white font-semibold text-sm mb-1 truncate" title={doc.name}>{doc.name}</p>
+                  <p className="text-slate-600 text-xs">{fmtSize(doc.file_size)} · {doc.profiles?.full_name ?? 'You'}</p>
+                  {doc.ai_summary && (
+                    <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2">{doc.ai_summary}</p>
+                  )}
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>
   )
 }
-
