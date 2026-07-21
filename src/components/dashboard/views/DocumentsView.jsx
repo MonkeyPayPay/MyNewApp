@@ -135,7 +135,7 @@ export default function DocumentsView({ circleId }) {
                 </div>
                 <button onClick={() => handleView(doc)} className="block w-full text-left">
                   <p className="text-white font-semibold text-sm mb-1 truncate" title={doc.name}>{doc.name}</p>
-                  <p className="text-slate-600 text-xs">{fmtSize(doc.file_size)} · {doc.profiles?.full_name ?? 'You'}</p>
+                  <p className="text-slate-400 text-xs">{fmtSize(doc.file_size)} · {doc.profiles?.full_name ?? 'You'}</p>
                   {doc.ai_summary && (
                     <p className="text-slate-500 text-xs mt-2 leading-relaxed line-clamp-2">{doc.ai_summary}</p>
                   )}

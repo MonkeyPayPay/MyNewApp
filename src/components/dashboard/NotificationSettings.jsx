@@ -102,7 +102,7 @@ export default function NotificationSettings() {
         ))}
       </div>
 
-      <p className="text-slate-600 text-xs text-center mt-6">
+      <p className="text-slate-400 text-xs text-center mt-6">
         Changes save automatically. You can also unsubscribe from any individual email.
       </p>
     </div>

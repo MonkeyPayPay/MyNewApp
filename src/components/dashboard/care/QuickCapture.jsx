@@ -60,7 +60,7 @@ export default function QuickCapture({ onAddTask }) {
             >
               {saving ? <><Loader className="w-4 h-4 animate-spin" /> Adding…</> : 'Add task'}
             </button>
-            <p className="text-slate-600 text-xs mt-2">Mentions of "today", "tomorrow", or a day name set the date automatically.</p>
+            <p className="text-slate-400 text-xs mt-2">Mentions of "today", "tomorrow", or a day name set the date automatically.</p>
           </motion.div>
         )}
       </AnimatePresence>

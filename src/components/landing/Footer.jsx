@@ -33,7 +33,7 @@ export default function Footer() {
               {['🍎', '🤖'].map((icon, i) => (
                 <div key={i} className="glass rounded-xl px-3 py-2 text-sm text-slate-500">
                   {icon} {i === 0 ? 'App Store' : 'Google Play'}
-                  <span className="text-slate-600"> · Soon</span>
+                  <span className="text-slate-400"> · Soon</span>
                 </div>
               ))}
             </div>
@@ -60,10 +60,10 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-slate-600 text-sm">
+          <p className="text-slate-400 text-sm">
             © {new Date().getFullYear()} CareCircle, Inc. All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-slate-600 text-sm">
+          <div className="flex items-center gap-2 text-slate-400 text-sm">
             Made with{' '}
             <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500" />{' '}
             for caregiving families

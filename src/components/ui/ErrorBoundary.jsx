@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component {
             An unexpected error occurred. Refreshing the page usually fixes it.
           </p>
           {this.state.error && (
-            <p className="text-slate-700 text-xs font-mono mb-6 bg-white/5 rounded-lg px-3 py-2 text-left break-all">
+            <p className="text-slate-400 text-xs font-mono mb-6 bg-white/5 rounded-lg px-3 py-2 text-left break-all">
               {this.state.error.message}
             </p>
           )}

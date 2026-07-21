@@ -78,7 +78,7 @@ export default function CalendarView({ circleId, can }) {
 
           <div className="grid grid-cols-7 mb-2">
             {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-              <div key={d} className="text-center text-slate-600 text-xs font-medium pb-2">{d}</div>
+              <div key={d} className="text-center text-slate-400 text-xs font-medium pb-2">{d}</div>
             ))}
           </div>
 
@@ -120,7 +120,7 @@ export default function CalendarView({ circleId, can }) {
                 {selectedAppts.length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                    <p className="text-slate-600 text-sm">Nothing scheduled</p>
+                    <p className="text-slate-400 text-sm">Nothing scheduled</p>
                     <button onClick={() => setShowModal(true)} className="text-indigo-400 hover:text-indigo-300 text-xs mt-3 font-medium transition-colors">Add appointment →</button>
                   </div>
                 ) : (
@@ -163,7 +163,7 @@ export default function CalendarView({ circleId, can }) {
               <motion.div key="empty" {...fadeSlideUp} className="text-center py-12">
                 <Calendar className="w-8 h-8 text-slate-700 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm">Select a date</p>
-                <p className="text-slate-600 text-xs mt-1">Tap any day to see or add appointments</p>
+                <p className="text-slate-400 text-xs mt-1">Tap any day to see or add appointments</p>
               </motion.div>
             )}
           </AnimatePresence>

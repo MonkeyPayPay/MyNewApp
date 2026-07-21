@@ -37,7 +37,7 @@ export default function AIAdvisorView({ can, onUpgrade }) {
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {generatedAt && (
-            <span className="text-slate-600 text-xs">
+            <span className="text-slate-400 text-xs">
               {cached ? 'Cached · ' : ''}{new Date(generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
@@ -62,7 +62,7 @@ export default function AIAdvisorView({ can, onUpgrade }) {
               </div>
             </div>
           ))}
-          <p className="text-center text-slate-600 text-sm">Claude is reading your care logs…</p>
+          <p className="text-center text-slate-400 text-sm">Claude is reading your care logs…</p>
         </div>
       )}
 

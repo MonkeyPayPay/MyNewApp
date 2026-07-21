@@ -82,7 +82,7 @@ export default function TasksView({ circleId, tasks, loading, addTask, toggleTas
 
       {completed.length > 0 && (
         <>
-          <h3 className="text-slate-600 text-xs uppercase tracking-widest font-medium mb-3">Completed</h3>
+          <h3 className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-3">Completed</h3>
           <div className="space-y-2 opacity-60 mb-8">
             {completed.slice(0, 10).map((task) => (
               <button key={task.id} onClick={() => toggleTask(task.id)} className="w-full glass rounded-2xl p-4 flex items-start gap-4 text-left">
@@ -96,7 +96,7 @@ export default function TasksView({ circleId, tasks, loading, addTask, toggleTas
 
       {templates.length > 0 && (
         <>
-          <h3 className="text-slate-600 text-xs uppercase tracking-widest font-medium mb-3 flex items-center gap-1.5">
+          <h3 className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-3 flex items-center gap-1.5">
             <Repeat className="w-3.5 h-3.5" /> Recurring
           </h3>
           <div className="space-y-2">
@@ -109,7 +109,7 @@ export default function TasksView({ circleId, tasks, loading, addTask, toggleTas
                     {' · '}{tpl.assigned?.full_name ?? 'Unassigned'}
                   </p>
                 </div>
-                <button onClick={() => stopRecurringTask(tpl.id)} className="text-slate-600 hover:text-rose-400 text-xs font-medium transition-colors flex-shrink-0 px-3 py-2 -mr-2">Stop</button>
+                <button onClick={() => stopRecurringTask(tpl.id)} className="text-slate-400 hover:text-rose-400 text-xs font-medium transition-colors flex-shrink-0 px-3 py-2 -mr-2">Stop</button>
               </div>
             ))}
           </div>

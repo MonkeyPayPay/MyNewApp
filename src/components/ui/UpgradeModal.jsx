@@ -124,7 +124,7 @@ export default function UpgradeModal({ feature, onClose }) {
                   Apple guidelines require subscriptions to be purchased outside the app.
                   Visit <span className="text-indigo-400 font-medium">carecircle.app</span> in your browser to start your free trial.
                 </p>
-                <p className="text-slate-600 text-xs">Then come back and enjoy full access here.</p>
+                <p className="text-slate-400 text-xs">Then come back and enjoy full access here.</p>
               </div>
             )
             : (
@@ -135,7 +135,7 @@ export default function UpgradeModal({ feature, onClose }) {
           }
 
           {!onApple && (
-            <p className="text-slate-600 text-xs text-center mt-3">
+            <p className="text-slate-400 text-xs text-center mt-3">
               No charge today · Cancel anytime · {price}/month after trial
             </p>
           )}

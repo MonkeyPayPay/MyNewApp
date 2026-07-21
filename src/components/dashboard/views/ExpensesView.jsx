@@ -64,17 +64,17 @@ export default function ExpensesView({ circleId, members, can }) {
         <Card>
           <p className="text-slate-500 text-xs mb-2">Total This Month</p>
           <p className="text-white font-black text-3xl">${(monthTotal / 100).toFixed(2)}</p>
-          <p className="text-slate-600 text-xs mt-1">{monthExp.length} expense{monthExp.length !== 1 ? 's' : ''}</p>
+          <p className="text-slate-400 text-xs mt-1">{monthExp.length} expense{monthExp.length !== 1 ? 's' : ''}</p>
         </Card>
         <Card>
           <p className="text-slate-500 text-xs mb-2">Paid by You</p>
           <p className="text-white font-black text-3xl">${(myTotal / 100).toFixed(2)}</p>
-          <p className="text-slate-600 text-xs mt-1">this month</p>
+          <p className="text-slate-400 text-xs mt-1">this month</p>
         </Card>
         <Card>
           <p className="text-slate-500 text-xs mb-2">Circle Members</p>
           <p className="text-white font-black text-3xl">{members.length || '—'}</p>
-          <p className="text-slate-600 text-xs mt-1">splitting costs</p>
+          <p className="text-slate-400 text-xs mt-1">splitting costs</p>
         </Card>
       </div>
 
@@ -108,7 +108,7 @@ export default function ExpensesView({ circleId, members, can }) {
                 )}
                 <div className="text-right flex-shrink-0">
                   <p className="text-white font-bold">${(expense.amount_cents / 100).toFixed(2)}</p>
-                  {members.length > 1 && <p className="text-slate-600 text-xs">÷{members.length} = ${(expense.amount_cents / 100 / members.length).toFixed(2)}</p>}
+                  {members.length > 1 && <p className="text-slate-400 text-xs">÷{members.length} = ${(expense.amount_cents / 100 / members.length).toFixed(2)}</p>}
                 </div>
                 {isOwn && (
                   <IconButton onClick={() => deleteExpense(expense.id)} variant="danger" aria-label={`Delete ${expense.label}`} className="opacity-40 group-hover:opacity-100 flex-shrink-0">

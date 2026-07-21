@@ -84,7 +84,7 @@ export default function Auth() {
 
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex-1 h-px bg-white/10" />
-                <span className="text-slate-600 text-xs">or</span>
+                <span className="text-slate-400 text-xs">or</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
 
@@ -114,7 +114,7 @@ export default function Auth() {
                 </Button>
               </form>
 
-              <p className="text-slate-600 text-xs text-center mt-5">
+              <p className="text-slate-400 text-xs text-center mt-5">
                 By signing in you agree to our{' '}
                 <a href="#" className="text-slate-500 hover:text-slate-400">Terms</a> and{' '}
                 <a href="#" className="text-slate-500 hover:text-slate-400">Privacy Policy</a>
