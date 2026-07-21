@@ -29,7 +29,7 @@ const plans = [
     price: { monthly: 12.99, annual: 9.99 },
     description: 'The complete family solution',
     color: 'border-indigo-500/50',
-    buttonStyle: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25',
+    buttonStyle: 'bg-brand bg-brand-hover text-white shadow-lg shadow-indigo-500/25',
     tag: 'Most Popular',
     features: [
       'Unlimited family members',
@@ -130,7 +130,7 @@ export default function Pricing({ onGetStarted, onGetStartedWithPlan }) {
             >
               {plan.tag && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                  <span className="bg-brand text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
                     <Zap className="w-3 h-3 fill-white" />
                     {plan.tag}
                   </span>

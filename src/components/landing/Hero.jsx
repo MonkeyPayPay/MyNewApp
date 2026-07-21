@@ -47,7 +47,7 @@ export default function Hero({ onGetStarted }) {
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <button
                 onClick={onGetStarted}
-                className="group flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+                className="group flex items-center justify-center gap-2 bg-brand bg-brand-hover text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5"
               >
                 Start Free — No Credit Card
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
