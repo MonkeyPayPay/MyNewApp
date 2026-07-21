@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Heart, Mail, ArrowRight, CheckCircle } from 'lucide-react'
+import { Mail, ArrowRight, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
-import IconBadge from '../components/ui/IconBadge'
+import logoLockup from '../assets/branding/logo-lockup-480.png'
 
 export default function Auth() {
   const { signInWithEmail, signInWithGoogle } = useAuth()
@@ -40,9 +40,8 @@ export default function Auth() {
       <div className="relative w-full max-w-md animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <IconBadge icon={Heart} tone="brand" size="lg" iconClassName="fill-white" className="mx-auto mb-4 shadow-xl shadow-indigo-500/30" />
-          <h1 className="text-white font-black text-2xl tracking-tight">CareCircle</h1>
-          <p className="text-slate-400 text-sm mt-1">The family command center for elder care</p>
+          <img src={logoLockup} alt="CareCircle" className="h-10 w-auto mx-auto mb-3" />
+          <p className="text-slate-400 text-sm">The family command center for elder care</p>
         </div>
 
         <div className="glass rounded-3xl p-8 border border-white/8">

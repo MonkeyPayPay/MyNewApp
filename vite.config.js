@@ -11,7 +11,7 @@ export default defineConfig({
       // and on web the root scope is what we want.
       scope: '/',
       base: '/',
-      includeAssets: ['favicon.svg', 'pwa-192.png', 'pwa-512.png'],
+      includeAssets: ['favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png', 'pwa-192.png', 'pwa-512.png'],
       manifest: {
         name: 'CareCircle',
         short_name: 'CareCircle',

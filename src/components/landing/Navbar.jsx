@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Heart, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import Button from '../ui/Button'
-import IconBadge from '../ui/IconBadge'
 import IconButton from '../ui/IconButton'
+import logoLockup from '../../assets/branding/logo-lockup-480.png'
 
 export default function Navbar({ onGetStarted }) {
   const [scrolled, setScrolled] = useState(false)
@@ -31,10 +31,7 @@ export default function Navbar({ onGetStarted }) {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <IconBadge icon={Heart} tone="brand" size="sm" iconClassName="fill-white" />
-          <span className="text-white font-bold text-lg tracking-tight">CareCircle</span>
-        </div>
+        <img src={logoLockup} alt="CareCircle" className="h-8 w-auto" />
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
