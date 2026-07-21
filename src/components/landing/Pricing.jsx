@@ -80,7 +80,7 @@ export default function Pricing({ onGetStarted, onGetStartedWithPlan }) {
   }
 
   return (
-    <section id="pricing" className="py-24 relative">
+    <section id="pricing" className="py-24 relative overflow-hidden">
       <div className="orb w-[500px] h-[500px] bg-indigo-700 top-0 left-[-10%]" />
 
       <div className="max-w-7xl mx-auto px-6">

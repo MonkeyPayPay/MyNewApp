@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Heart, Home, ClipboardList, Calendar, DollarSign, FolderOpen,
-  Bell, LogOut, Zap, CreditCard, UserPlus, Brain, Activity, Menu
+  Bell, LogOut, Zap, CreditCard, UserPlus, Brain, Activity, Menu, X, MoreHorizontal
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useCircle } from '../../hooks/useCircle'
 import { useTasks } from '../../hooks/useTasks'
 import { useSubscription } from '../../hooks/useSubscription'
-import { fadeSlideUp } from '../../lib/motion'
+import { fadeSlideUp, backdropFade, SPRING_PANEL } from '../../lib/motion'
 import IconBadge from '../ui/IconBadge'
 import IconButton from '../ui/IconButton'
 import UpgradeModal from '../ui/UpgradeModal'
@@ -43,6 +43,10 @@ const NAV_GATES = { expenses: 'expenses', documents: 'documents', ai: 'ai_adviso
 const RESTRICTED_ROLE_NAV = ['expenses', 'documents', 'ai']
 const RESTRICTED_ROLE_FEATURES = ['expenses', 'documents', 'ai_advisor']
 
+// Below md, there's no room for 8 nav items — these four live in the
+// bottom tab bar, everything else moves into the "More" sheet.
+const PRIMARY_MOBILE_NAV = ['home', 'feed', 'tasks', 'calendar']
+
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
 export default function Dashboard({ onLogout, onRegisterNavigate }) {
@@ -58,6 +62,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
   const [sidebarOpen, setSidebarOpen]   = useState(true)
   const [upgradeModal, setUpgradeModal] = useState(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
 
   // Register deep-link handler for push notification taps
   useEffect(() => { onRegisterNavigate?.(navigateTo) }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -71,11 +76,16 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
     ? navItems.filter(item => !RESTRICTED_ROLE_NAV.includes(item.id))
     : navItems
 
+  const primaryMobileNavItems = visibleNavItems.filter(item => PRIMARY_MOBILE_NAV.includes(item.id))
+  const moreNavItems = visibleNavItems.filter(item => !PRIMARY_MOBILE_NAV.includes(item.id))
+  const isMoreActive = moreNavItems.some(item => item.id === activeNav)
+
   function navigateTo(id) {
     if (myRole === 'caregiver' && RESTRICTED_ROLE_NAV.includes(id)) return
     const feature = NAV_GATES[id]
     if (feature && !can(feature)) { setUpgradeModal(feature); return }
     setActiveNav(id)
+    setMobileMoreOpen(false)
   }
 
   const renderContent = () => {
@@ -106,8 +116,8 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
       {upgradeModal && <UpgradeModal feature={upgradeModal} onClose={() => setUpgradeModal(null)} />}
       {showInviteModal && <InviteModal can={can} onClose={() => setShowInviteModal(false)} onSend={inviteMember} />}
 
-      {/* Sidebar */}
-      <aside className={`flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-ink-950 border-r border-white/5 flex flex-col`}>
+      {/* Sidebar — desktop only; mobile uses the bottom tab bar + More sheet below */}
+      <aside className={`hidden md:flex md:flex-shrink-0 ${sidebarOpen ? 'w-60' : 'w-16'} transition-all duration-300 bg-ink-950 border-r border-white/5 flex-col`}>
         <div className="px-4 pb-4 pt-safe border-b border-white/5">
           <div className="flex items-center gap-3">
             <IconBadge icon={Heart} tone="brand" size="sm" iconClassName="fill-white" />
@@ -117,7 +127,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
 
         {sidebarOpen && (
           <div className="p-4 border-b border-white/5">
-            <p className="text-slate-600 text-xs uppercase tracking-widest font-medium mb-2">Caring for</p>
+            <p className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-2">Caring for</p>
             {circleLoading
               ? <div className="h-14 bg-white/5 rounded-xl animate-pulse" />
               : recipient
@@ -132,7 +142,7 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
                     </div>
                   </div>
                 )
-                : <p className="text-slate-600 text-xs">No circle yet</p>
+                : <p className="text-slate-400 text-xs">No circle yet</p>
             }
             {circle && (
               <button
@@ -214,28 +224,28 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-ink-950/80 backdrop-blur border-b border-white/5 px-6 pb-4 pt-safe flex items-center justify-between flex-shrink-0">
+        <header className="bg-ink-950/80 backdrop-blur border-b border-white/5 px-4 md:px-6 pb-4 pt-safe flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
-            <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'} className="-ml-2.5">
+            <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'} className="hidden md:inline-flex -ml-2.5">
               <Menu className="w-5 h-5" />
             </IconButton>
             <div>
               <h1 className="text-white font-bold text-lg">{navItems.find(n => n.id === activeNav)?.label || 'Dashboard'}</h1>
-              <p className="text-slate-500 text-xs">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+              <p className="text-slate-500 text-xs hidden sm:block">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <IconButton aria-label="Notifications">
+            <IconButton aria-label="Notifications" className="hidden md:inline-flex">
               <Bell className="w-5 h-5" />
             </IconButton>
             <button className="flex items-center gap-2 glass rounded-xl px-3 py-2">
               <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center text-white text-xs font-bold">{initials}</div>
-              <span className="text-slate-300 text-sm font-medium">{firstName}</span>
+              <span className="text-slate-300 text-sm font-medium hidden sm:inline">{firstName}</span>
             </button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={activeNav} {...fadeSlideUp}>
               {renderContent()}
@@ -243,6 +253,156 @@ export default function Dashboard({ onLogout, onRegisterNavigate }) {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-ink-950/95 backdrop-blur-xl border-t border-white/5 pb-safe flex items-stretch">
+        {primaryMobileNavItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => navigateTo(item.id)}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-xs font-medium transition-colors ${
+              activeNav === item.id ? 'text-indigo-400' : 'text-slate-500'
+            }`}
+          >
+            <span className="relative flex-shrink-0">
+              {item.icon}
+              {item.id === 'tasks' && pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {pendingCount > 9 ? '9+' : pendingCount}
+                </span>
+              )}
+            </span>
+            {item.label === 'Dashboard' ? 'Home' : item.label}
+          </button>
+        ))}
+        <button
+          onClick={() => setMobileMoreOpen(true)}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-xs font-medium transition-colors ${
+            isMoreActive ? 'text-indigo-400' : 'text-slate-500'
+          }`}
+        >
+          <MoreHorizontal className="w-5 h-5" />
+          More
+        </button>
+      </nav>
+
+      {/* Mobile "More" sheet — everything that doesn't fit in the tab bar */}
+      <AnimatePresence>
+        {mobileMoreOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex items-end">
+            <motion.div
+              {...backdropFade}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileMoreOpen(false)}
+              aria-hidden="true"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={SPRING_PANEL}
+              role="dialog"
+              aria-modal="true"
+              aria-label="More"
+              className="relative w-full max-h-[85vh] overflow-y-auto bg-ink-950 rounded-t-3xl border-t border-white/10 p-4 pb-safe"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-white font-bold text-lg">More</h2>
+                <IconButton onClick={() => setMobileMoreOpen(false)} aria-label="Close">
+                  <X className="w-5 h-5" />
+                </IconButton>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-2">Caring for</p>
+                {circleLoading
+                  ? <div className="h-14 bg-white/5 rounded-xl animate-pulse" />
+                  : recipient
+                    ? (
+                      <div className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {recipient.full_name?.[0] ?? '?'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white font-semibold text-sm truncate">{recipient.full_name}</p>
+                          <p className="text-slate-500 text-xs">{members.length} family member{members.length !== 1 ? 's' : ''}</p>
+                        </div>
+                      </div>
+                    )
+                    : <p className="text-slate-400 text-xs">No circle yet</p>
+                }
+                {circle && (
+                  <button
+                    onClick={() => { setShowInviteModal(true); setMobileMoreOpen(false) }}
+                    className="mt-2 w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-indigo-400 hover:bg-indigo-500/10 text-sm font-medium transition-all"
+                  >
+                    <UserPlus className="w-4 h-4 flex-shrink-0" />
+                    Invite family member
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-1 mb-4 border-t border-white/5 pt-3">
+                {moreNavItems.map((item) => {
+                  const isLocked = NAV_GATES[item.id] && !can(NAV_GATES[item.id])
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateTo(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all ${
+                        activeNav === item.id
+                          ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/20'
+                          : 'text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex-shrink-0">{item.icon}</span>
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {isLocked && <Zap className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="space-y-1 border-t border-white/5 pt-3">
+                <button
+                  onClick={() => { setMobileMoreOpen(false); if (tier === 'free') setUpgradeModal('ai_advisor'); else openPortal() }}
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl text-xs font-semibold transition-all ${
+                    tier === 'pro'
+                      ? 'bg-orange-500/10 text-orange-300'
+                      : tier === 'family'
+                        ? 'bg-indigo-500/10 text-indigo-300'
+                        : 'bg-white/5 text-slate-400'
+                  }`}
+                >
+                  <span className="uppercase tracking-wide">{tier} plan</span>
+                  {isTrialing && trialDaysLeft !== null && (
+                    <span className="font-medium normal-case tracking-normal">{trialDaysLeft}d left in trial</span>
+                  )}
+                </button>
+                {tier === 'free' && (
+                  <button
+                    onClick={() => { setMobileMoreOpen(false); setUpgradeModal('ai_advisor') }}
+                    className="w-full flex items-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 text-sm font-medium text-indigo-300 transition-all"
+                  >
+                    <Zap className="w-4 h-4 fill-indigo-400 text-indigo-400 flex-shrink-0" />
+                    Upgrade to Family
+                  </button>
+                )}
+                {tier !== 'free' && (
+                  <button onClick={() => { setMobileMoreOpen(false); openPortal() }} className="w-full flex items-center gap-2 px-3 py-3 rounded-xl text-slate-300 hover:bg-white/5 text-sm transition-all">
+                    <CreditCard className="w-4 h-4 flex-shrink-0" />
+                    Manage Billing
+                  </button>
+                )}
+                <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10 text-sm transition-all">
+                  <LogOut className="w-5 h-5 flex-shrink-0" />
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

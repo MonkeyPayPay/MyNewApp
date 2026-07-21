@@ -18,7 +18,7 @@ const scenarios = [
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="py-24 relative">
+    <section id="testimonials" className="py-24 relative overflow-hidden">
       <div className="orb w-[400px] h-[400px] bg-purple-700 bottom-0 right-[-10%] opacity-30" />
 
       <div className="max-w-7xl mx-auto px-6">

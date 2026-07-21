@@ -47,7 +47,7 @@ export default function Modal({ onClose, title, maxWidth = 'max-w-md', children 
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className={`relative w-full ${maxWidth} bg-ink-950 rounded-3xl p-6 border border-white/10 shadow-elevation-2`}
+            className={`relative w-full ${maxWidth} max-h-[85vh] overflow-y-auto bg-ink-950 rounded-3xl p-6 border border-white/10 shadow-elevation-2`}
             onClick={e => e.stopPropagation()}
           >
             {title && (
