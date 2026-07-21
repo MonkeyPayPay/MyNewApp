@@ -2,9 +2,11 @@
 // is what collapsed the lg/xl/2xl split found in the design audit for
 // what was meant to be one "icon in a colored square" pattern.
 const SIZES = {
+  xs: { box: 'w-8 h-8',   radius: 'rounded-lg',  icon: 'w-3.5 h-3.5' }, // small inline badge next to a heading
   sm: { box: 'w-8 h-8',   radius: 'rounded-lg',  icon: 'w-4 h-4' },
   md: { box: 'w-10 h-10', radius: 'rounded-xl',  icon: 'w-5 h-5' },
   lg: { box: 'w-12 h-12', radius: 'rounded-2xl', icon: 'w-6 h-6' },
+  xl: { box: 'w-16 h-16', radius: 'rounded-2xl', icon: 'w-8 h-8' }, // hero/empty-state/upsell icon
 }
 
 const TONES = {
