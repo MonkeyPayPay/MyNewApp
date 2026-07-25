@@ -1,4 +1,5 @@
 import { ArrowRight, Play, CheckCircle, FileText, DollarSign } from 'lucide-react'
+import heroBanner from '../../assets/branding/hero-banner-web.jpg'
 
 const mockFeedItems = [
   { icon: '💊', text: 'Medication logged — Lisinopril 10mg', time: '2m ago', color: 'text-emerald-400' },
@@ -22,6 +23,12 @@ export default function Hero({ onGetStarted }) {
       <div className="orb w-[300px] h-[300px] bg-orange-500 top-[30%] right-[20%] opacity-20" />
 
       <div className="max-w-7xl mx-auto px-6 w-full">
+        <img
+          src={heroBanner}
+          alt="CareCircle — Care, coordinated."
+          className="w-full rounded-3xl shadow-elevation-2 mb-12 lg:mb-16 animate-slide-up"
+        />
+
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Copy */}
           <div className="animate-slide-up">
@@ -30,11 +37,10 @@ export default function Hero({ onGetStarted }) {
               <span className="text-indigo-300 text-sm font-medium">Free to start — no credit card</span>
             </div>
 
-            <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight mb-6">
+            <h1 className="text-3xl lg:text-4xl font-black text-white leading-[1.15] tracking-tight mb-6">
               Your family,{' '}
               <span className="text-gradient">coordinated.</span>
-              <br />
-              Your parent,{' '}
+              {' '}Your parent,{' '}
               <span className="text-gradient">cared for.</span>
             </h1>
 
